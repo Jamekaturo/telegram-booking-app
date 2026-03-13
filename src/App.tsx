@@ -5,13 +5,16 @@ import { ServiceList } from './components/ServiceList';
 import { Calendar } from './components/Calendar';
 import { TimeSlots } from './components/TimeSlots';
 import { BookingButton } from './components/BookingButton';
+import { AdminPanel } from './components/AdminPanel';
 import { format } from 'date-fns';
+import { Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 
 function App() {
   const { tenant, loading, error } = useTenant();
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [mode, setMode] = useState<'booking' | 'admin'>('booking');
 
   if (loading) {
     return (
@@ -73,51 +76,59 @@ function App() {
 
   return (
     <div className="min-h-[100dvh] bg-[#040405] pb-[140px] font-sans text-zinc-100 relative overflow-x-hidden">
-      {/* Premium animated background blur blobs */}
-      <div 
-        className="fixed top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full blur-[100px] opacity-20 pointer-events-none animate-blob"
-        style={{ backgroundColor: tenant.colors.primary }}
-      />
-      <div 
-        className="fixed top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-10 pointer-events-none animate-blob"
-        style={{ backgroundColor: tenant.colors.secondary, animationDelay: '2s' }}
-      />
+      {/* Toggler Button */}
+      {tenant && (
+        <button
+          onClick={() => setMode(mode === 'booking' ? 'admin' : 'booking')}
+          className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-zinc-900 border border-white/10 shadow-lg text-zinc-400 hover:text-white transition-colors active:scale-95"
+        >
+          {mode === 'booking' ? <SettingsIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
+        </button>
+      )}
 
       <div className="relative z-10">
         <Header tenant={tenant} />
         
-        <main className="max-w-[480px] mx-auto fade-in pb-8">
-        <ServiceList 
-          tenant={tenant}
-          selectedServiceIds={selectedServiceIds}
-          onToggleService={handleToggleService}
-        />
-        
-        {selectedServiceIds.length > 0 && (
-          <div className="space-y-6 mt-2 pt-4 animate-slide-up">
-            <Calendar 
+        {mode === 'booking' ? (
+          <main className="max-w-[480px] mx-auto fade-in pb-8">
+            <ServiceList 
               tenant={tenant}
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
+              selectedServiceIds={selectedServiceIds}
+              onToggleService={handleToggleService}
             />
             
-            <TimeSlots 
-              tenant={tenant}
-              selectedDate={selectedDate}
-              selectedSlot={selectedSlot}
-              onSelectSlot={setSelectedSlot}
-            />
-          </div>
+            {selectedServiceIds.length > 0 && (
+              <div className="space-y-6 mt-2 pt-4 animate-slide-up">
+                <Calendar 
+                  tenant={tenant}
+                  selectedDate={selectedDate}
+                  onSelectDate={handleSelectDate}
+                />
+                
+                <TimeSlots 
+                  tenant={tenant}
+                  selectedDate={selectedDate}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={setSelectedSlot}
+                />
+              </div>
+            )}
+          </main>
+        ) : (
+          <main className="max-w-[480px] mx-auto">
+            <AdminPanel tenant={tenant} />
+          </main>
         )}
-      </main>
       </div>
 
-      <BookingButton 
-        tenant={tenant}
-        disabled={!canBook}
-        onClick={handleBooking}
-        totalPrice={totalPrice}
-      />
+      {mode === 'booking' && (
+        <BookingButton 
+          tenant={tenant}
+          disabled={!canBook}
+          onClick={handleBooking}
+          totalPrice={totalPrice}
+        />
+      )}
     </div>
   );
 }
