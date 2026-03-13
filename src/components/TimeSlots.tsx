@@ -33,12 +33,14 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
   }
 
   return (
-    <div className="p-4 mt-2">
-      <div className="flex items-center gap-2 mb-4 mx-1">
-        <Clock className="w-5 h-5 text-zinc-400" />
-        <h3 className="text-base font-semibold text-zinc-100">Доступное время</h3>
+    <div className="p-5 bg-zinc-900/40 backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/5 mt-4 transition-all duration-300">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-8 h-8 rounded-full bg-zinc-800/50 flex items-center justify-center border border-white/5">
+          <Clock className="w-4 h-4 text-zinc-300" />
+        </div>
+        <h3 className="text-[17px] font-bold text-zinc-100 tracking-wide">Доступное время</h3>
       </div>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-2.5">
         {slots.map((slot) => {
           const isSelected = selectedSlot === slot;
           return (
@@ -47,15 +49,18 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
               onClick={() => onSelectSlot(slot)}
               className={twMerge(
                 clsx(
-                  "py-3 rounded-[1.25rem] text-sm font-semibold tracking-wide transition-all border",
+                  "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-all duration-300 border relative overflow-hidden",
                   isSelected
-                    ? "text-white shadow-md border-transparent scale-105"
-                    : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800 active:scale-95"
+                    ? "text-white shadow-[0_0_20px_rgba(0,0,0,0.15)] border-transparent scale-[1.03] z-10"
+                    : "bg-zinc-800/40 text-zinc-300 border-white/5 hover:bg-zinc-800/80 hover:border-white/10 active:scale-95 z-0"
                 )
               )}
-              style={isSelected ? { backgroundColor: tenant.colors.primary } : {}}
+              style={isSelected ? { background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)` } : {}}
             >
-              {slot}
+              {isSelected && (
+                <div className="absolute inset-0 w-full h-full bg-white opacity-10" />
+              )}
+              <span className="relative z-10 drop-shadow-sm">{slot}</span>
             </button>
           );
         })}

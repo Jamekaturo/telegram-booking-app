@@ -72,10 +72,21 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-zinc-950 pb-[140px] font-sans text-zinc-100">
-      <Header tenant={tenant} />
-      
-      <main className="max-w-md mx-auto fade-in">
+    <div className="min-h-[100dvh] bg-[#040405] pb-[140px] font-sans text-zinc-100 relative overflow-x-hidden">
+      {/* Premium animated background blur blobs */}
+      <div 
+        className="fixed top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full blur-[100px] opacity-20 pointer-events-none animate-blob"
+        style={{ backgroundColor: tenant.colors.primary }}
+      />
+      <div 
+        className="fixed top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-10 pointer-events-none animate-blob"
+        style={{ backgroundColor: tenant.colors.secondary, animationDelay: '2s' }}
+      />
+
+      <div className="relative z-10">
+        <Header tenant={tenant} />
+        
+        <main className="max-w-[480px] mx-auto fade-in pb-8">
         <ServiceList 
           tenant={tenant}
           selectedServiceIds={selectedServiceIds}
@@ -99,6 +110,7 @@ function App() {
           </div>
         )}
       </main>
+      </div>
 
       <BookingButton 
         tenant={tenant}
