@@ -63,10 +63,10 @@ function App() {
       const webApp = (window as any).Telegram?.WebApp;
       const tgUser = webApp?.initDataUnsafe?.user;
       
-      const tgId = tgUser?.id || Math.floor(Math.random() * 100000);
-      const firstName = tgUser?.first_name || 'Тестовый';
-      const lastName = tgUser?.last_name || 'Клиент';
-      const username = tgUser?.username || 'testclient';
+      const tgId = tgUser?.id || Math.floor(Math.random() * 1000000);
+      const firstName = tgUser?.first_name || 'Клиент';
+      const lastName = tgUser?.last_name || '';
+      const username = tgUser?.username || '';
 
 
       // Пытаемся найти или создать клиента
@@ -85,6 +85,12 @@ function App() {
         
         if (newClientError) throw newClientError;
         clientData = newClient;
+      } else {
+        // Обновляем данные клиента (если раньше были тестовые или без юзернейма)
+        await supabase
+          .from('clients')
+          .update({ first_name: firstName, last_name: lastName, username: username })
+          .eq('id', clientData.id);
       }
 
       // 2. Рассчитываем время окончания (очень простой расчет)
