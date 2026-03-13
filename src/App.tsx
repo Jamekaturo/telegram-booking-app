@@ -8,6 +8,7 @@ import { BookingButton } from './components/BookingButton';
 import { AdminPanel } from './components/AdminPanel';
 import { format } from 'date-fns';
 import { Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 function App() {
   const { tenant, setTenant, loading, error } = useTenant();
@@ -15,6 +16,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mode, setMode] = useState<'booking' | 'admin'>('booking');
+  const [isBooking, setIsBooking] = useState(false);
 
   if (loading) {
     return (
@@ -51,26 +53,77 @@ function App() {
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const canBook = selectedServiceIds.length > 0 && selectedDate !== null && selectedSlot !== null;
 
-  const handleBooking = () => {
-    if (!canBook) return;
+  const handleBooking = async () => {
+    if (!canBook || !selectedDate || !selectedSlot) return;
 
-    const bookingData = {
-      tenantId: tenant.id,
-      services: selectedServiceIds,
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      time: selectedSlot,
-      totalPrice
-    };
+    setIsBooking(true);
+    try {
+      // 1. Создаем или находим мокового клиента (т.к. у нас пока нет реальной авторизации)
+      // В реальном приложении данные берутся из Telegram WebApp initData
+      const webApp = (window as any).Telegram?.WebApp;
+      const tgUser = webApp?.initDataUnsafe?.user;
+      
+      const tgId = tgUser?.id || Math.floor(Math.random() * 100000);
+      const firstName = tgUser?.first_name || 'Тестовый';
+      const lastName = tgUser?.last_name || 'Клиент';
+      const username = tgUser?.username || 'testclient';
 
-    console.log('Отправка данных записи:', bookingData);
+      // Пытаемся найти или создать клиента
+      let { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('telegram_id', tgId)
+        .single();
 
-    const webApp = (window as any).Telegram?.WebApp;
-    if (webApp) {
-      webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`, () => {
-        webApp.close();
-      });
-    } else {
-      alert(`Локальный тест: Запись на ${format(selectedDate, 'dd.MM')} в ${selectedSlot} успешно создана!`);
+      if (!clientData) {
+        const { data: newClient, error: newClientError } = await supabase
+          .from('clients')
+          .insert([{ telegram_id: tgId, first_name: firstName, last_name: lastName, username: username }])
+          .select('id')
+          .single();
+        
+        if (newClientError) throw newClientError;
+        clientData = newClient;
+      }
+
+      // 2. Рассчитываем время окончания (очень простой расчет)
+      const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+      const [hours, minutes] = selectedSlot.split(':').map(Number);
+      const startDateTime = new Date(selectedDate);
+      startDateTime.setHours(hours, minutes, 0, 0);
+      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000);
+      const endSlot = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`;
+
+      // 3. Создаем записи (по одной на каждую услугу, либо можно объединить)
+      // В текущей схеме БД 1 запись = 1 услуга. Создадим записи для всех выбранных услуг.
+      const appointmentsToInsert = selectedServiceIds.map(serviceId => ({
+        client_id: clientData.id,
+        service_id: serviceId,
+        appointment_date: format(selectedDate, 'yyyy-MM-dd'),
+        start_time: `${selectedSlot}:00`,
+        end_time: `${endSlot}:00`,
+        status: 'pending'
+      }));
+
+      const { error: apptError } = await supabase.from('appointments').insert(appointmentsToInsert);
+      if (apptError) throw apptError;
+
+      if (webApp && webApp.showAlert) {
+        webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`, () => {
+          webApp.close();
+        });
+      } else {
+        alert(`Запись успешно создана в базе данных!`);
+        // Сброс формы
+        setSelectedServiceIds([]);
+        setSelectedDate(null);
+        setSelectedSlot(null);
+      }
+    } catch (err: any) {
+      console.error('Ошибка записи:', err);
+      alert('Произошла ошибка при записи: ' + err.message);
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -127,7 +180,7 @@ function App() {
       {mode === 'booking' && (
         <BookingButton 
           tenant={tenant}
-          disabled={!canBook}
+          disabled={!canBook || isBooking}
           onClick={handleBooking}
           totalPrice={totalPrice}
         />
