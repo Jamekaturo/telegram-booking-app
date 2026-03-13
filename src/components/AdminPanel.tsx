@@ -40,26 +40,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
   const currentSlots = (dateStr ? localSlots[dateStr] : []) || [];
   const isDayOff = dateStr ? !localAvailable.includes(dateStr) : false;
 
-  const handleRemoveSlot = (time: string) => {
-    if (!dateStr) return;
-    setLocalSlots(prev => ({
-      ...prev,
-      [dateStr]: (prev[dateStr] || []).filter(t => t !== time)
-    }));
-  };
+  const allTimes = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
 
-  const handleAddSlot = () => {
-    if (!dateStr) return;
-    const newTime = prompt('Введите время (например, 12:00):', '12:00');
-    if (!newTime) return;
-    if (!/^\d{1,2}:\d{2}$/.test(newTime)) {
-      alert('Неверный формат времени (ожидается ЧЧ:ММ)!');
-      return;
-    }
+  const handleToggleSlot = (time: string) => {
+    if (!dateStr || isDayOff) return;
     setLocalSlots(prev => {
       const existing = prev[dateStr] || [];
-      if (existing.includes(newTime)) return prev;
-      return { ...prev, [dateStr]: [...existing, newTime].sort() };
+      if (existing.includes(time)) {
+        return { ...prev, [dateStr]: existing.filter(t => t !== time) };
+      } else {
+        return { ...prev, [dateStr]: [...existing, time].sort() };
+      }
     });
   };
 
@@ -67,6 +58,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     if (!dateStr) return;
     if (isDayOff) {
       setLocalAvailable(prev => [...prev, dateStr]);
+      setLocalSlots(prev => {
+        if (!prev[dateStr] || prev[dateStr].length === 0) {
+           return { ...prev, [dateStr]: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'] };
+        }
+        return prev;
+      });
     } else {
       setLocalAvailable(prev => prev.filter(d => d !== dateStr));
     }
@@ -218,19 +215,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                       Окна на <span className="text-purple-400">{format(tempDate, 'd MMMM', { locale: ru })}</span>
                     </span>
                   </h4>
-                  <div className="flex flex-wrap gap-2.5 mb-5">
-                    {currentSlots.length === 0 && <span className="text-zinc-500 text-[13px]">Нет доступных окон</span>}
-                    {currentSlots.map(time => (
-                      <span key={time} className="pl-3 pr-2 py-1.5 bg-zinc-900 shadow-sm text-zinc-200 rounded-xl text-[13px] font-medium border border-white/5 flex items-center gap-1 hover:border-red-500/30 transition-colors group cursor-default">
-                        {time} 
-                        <button onClick={() => handleRemoveSlot(time)} className="p-0.5 rounded-full text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                          <X className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                  <div className={`grid grid-cols-4 gap-2 mb-5 transition-opacity duration-300 ${isDayOff ? 'opacity-30 pointer-events-none' : ''}`}>
+                    {allTimes.map(time => {
+                      const isActive = currentSlots.includes(time);
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => handleToggleSlot(time)}
+                          className={`py-2 rounded-xl text-[13px] font-medium transition-all duration-300 border active:scale-95 ${
+                            isActive 
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 shadow-sm' 
+                              : 'bg-zinc-900 text-zinc-500 border-white/5 hover:bg-zinc-800 hover:text-zinc-300'
+                          }`}
+                        >
+                          {time}
                         </button>
-                      </span>
-                    ))}
-                    <button onClick={handleAddSlot} className="px-3 py-1.5 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 active:bg-purple-500/30 rounded-xl text-[13px] font-semibold border border-purple-500/20 flex items-center gap-1 transition-colors">
-                      <Plus className="w-3.5 h-3.5" /> Добавить
-                    </button>
+                      );
+                    })}
                   </div>
                   
                   <div className="pt-4 border-t border-white/5 flex items-center justify-between">
