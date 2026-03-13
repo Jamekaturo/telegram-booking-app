@@ -14,9 +14,10 @@ interface CalendarProps {
   tenant: Tenant;
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
+  isAdmin?: boolean;
 }
 
-export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSelectDate }) => {
+export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSelectDate, isAdmin = false }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -87,6 +88,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
           const isSelected = selectedDate && isSameDay(selectedDate, day);
           const available = isAvailable(day);
           const isCurrentMonth = isExpanded ? isSameMonth(day, currentDate) : true;
+          const disabled = !isAdmin && !available;
 
           return (
             <div key={i} className="flex justify-center items-center relative">
@@ -97,15 +99,15 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                 />
               )}
               <button
-                disabled={!available}
-                onClick={() => available && onSelectDate(day)}
+                disabled={disabled}
+                onClick={() => !disabled && onSelectDate(day)}
                 className={twMerge(
                   clsx(
                     "flex flex-col items-center justify-center rounded-2xl transition-all duration-300 w-full relative z-10",
                     isExpanded ? "aspect-square max-w-[44px] py-1" : "py-2.5 max-w-[48px]",
                     isSelected ? "shadow-lg scale-[1.08]" : "",
-                    available && !isSelected ? "hover:bg-zinc-800/50 active:scale-95 text-zinc-300" : "",
-                    !available ? "opacity-20 cursor-not-allowed" : "",
+                    !disabled && !isSelected ? "hover:bg-zinc-800/50 active:scale-95 text-zinc-300" : "",
+                    disabled ? "opacity-20 cursor-not-allowed" : "",
                     !isCurrentMonth ? "opacity-0 invisible" : ""
                   )
                 )}
