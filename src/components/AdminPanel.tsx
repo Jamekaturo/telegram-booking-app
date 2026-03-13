@@ -15,17 +15,62 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
   const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'services'>('appointments');
   const [tempDate, setTempDate] = useState<Date | null>(null);
 
-  // --- Appointments State (Mock) ---
-  const [mockAppointments, setMockAppointments] = useState([
-    { id: 1, name: 'Анна С.', handle: '@annasmith', service: 'Маникюр с покрытием', date: 'Завтра, 14:00', status: 'pending' },
-    { id: 2, name: 'Елена В.', handle: '@elenav', service: 'Педикюр', date: 'Послезавтра, 16:00', status: 'pending' }
-  ]);
+  // --- Appointments State ---
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loadingAppts, setLoadingAppts] = useState(true);
 
-  const handleConfirmAppt = (id: number) => {
-    setMockAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' } : a));
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        setLoadingAppts(true);
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            appointment_date,
+            start_time,
+            status,
+            client_comment,
+            clients ( first_name, last_name, username ),
+            services ( name )
+          `)
+          .order('appointment_date', { ascending: true })
+          .order('start_time', { ascending: true });
+
+        if (error) throw error;
+        setAppointments(data || []);
+      } catch (err) {
+        console.error('Error fetching appointments:', err);
+      } finally {
+        setLoadingAppts(false);
+      }
+    };
+
+    if (activeTab === 'appointments') {
+      fetchAppointments();
+    }
+  }, [activeTab]);
+
+  const handleConfirmAppt = async (id: string) => {
+    try {
+      const { error } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id);
+      if (error) throw error;
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' } : a));
+    } catch (err: any) {
+      alert('Ошибка при подтверждении: ' + err.message);
+    }
   };
-  const handleCancelAppt = (id: number) => {
-    setMockAppointments(prev => prev.filter(a => a.id !== id));
+
+  const handleCancelAppt = async (id: string) => {
+    if (confirm('Отменить запись?')) {
+      try {
+        const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id);
+        if (error) throw error;
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a).filter(a => a.status !== 'cancelled')); 
+      } catch (err: any) {
+        alert('Ошибка при отмене: ' + err.message);
+      }
+    }
   };
 
   // --- Schedule State ---
@@ -256,42 +301,54 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                   <Clock className="w-4 h-4 text-purple-400" /> Последние записи
                 </h3>
               </div>
-              {mockAppointments.length === 0 ? (
+              {loadingAppts ? (
+                <p className="text-zinc-500 text-sm py-4 text-center w-full">Загрузка записей...</p>
+              ) : appointments.length === 0 ? (
                 <p className="text-zinc-500 text-sm py-4 text-center w-full">Нет новых записей</p>
               ) : (
-                mockAppointments.map(appt => (
-                  <div key={appt.id} className="bg-zinc-800/40 p-4 rounded-2xl border border-white/5 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
-                          {appt.name}
-                          <a href={`https://t.me/${appt.handle.replace('@','')}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
-                            {appt.handle}
-                          </a>
-                        </p>
-                        <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5">
-                          <div className={`w-1 h-1 rounded-full opacity-80 ${appt.status === 'confirmed' ? 'bg-green-500' : 'bg-purple-500'}`} />
-                          {appt.service} {appt.status === 'confirmed' && <span className="text-green-500 text-[11px] ml-1">(Подтверждено)</span>}
+                appointments.map(appt => {
+                  const clientName = appt.clients ? `${appt.clients.first_name || ''} ${appt.clients.last_name || ''}`.trim() || 'Без имени' : 'Без имени';
+                  const handle = appt.clients?.username ? `@${appt.clients.username}` : '';
+                  const serviceName = appt.services?.name || 'Услуга удалена';
+                  const dateStr = format(new Date(appt.appointment_date), 'dd MMM', { locale: ru });
+                  const timeStr = appt.start_time.substring(0, 5); // "14:00:00" -> "14:00"
+
+                  return (
+                    <div key={appt.id} className="bg-zinc-800/40 p-4 rounded-2xl border border-white/5 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
+                            {clientName}
+                            {handle && (
+                              <a href={`https://t.me/${handle.replace('@','')}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
+                                {handle}
+                              </a>
+                            )}
+                          </p>
+                          <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5">
+                            <div className={`w-1 h-1 rounded-full opacity-80 ${appt.status === 'confirmed' ? 'bg-green-500' : 'bg-purple-500'}`} />
+                            {serviceName} {appt.status === 'confirmed' && <span className="text-green-500 text-[11px] ml-1">(Подтверждено)</span>}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-zinc-950/50 text-zinc-300 text-[11px] font-medium border border-white/5 shadow-sm">
+                            {dateStr}, {timeStr}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-zinc-950/50 text-zinc-300 text-[11px] font-medium border border-white/5 shadow-sm">
-                          {appt.date}
-                        </span>
-                      </div>
+                      {appt.status === 'pending' && (
+                        <div className="flex gap-2 mt-2">
+                          <button onClick={() => handleConfirmAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
+                            Подтвердить
+                          </button>
+                          <button onClick={() => handleCancelAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-500 text-[13px] font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all border border-red-500/20 shadow-sm active:scale-95">
+                            Отменить
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {appt.status === 'pending' && (
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => handleConfirmAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
-                          Подтвердить
-                        </button>
-                        <button onClick={() => handleCancelAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-500 text-[13px] font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all border border-red-500/20 shadow-sm active:scale-95">
-                          Отменить
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
