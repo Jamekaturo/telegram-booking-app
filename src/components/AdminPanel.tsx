@@ -96,36 +96,61 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
   };
 
   // --- Services State ---
-  const handleAddService = () => {
-    const name = prompt('Название услуги:');
-    if (!name) return;
-    const price = parseInt(prompt('Стоимость (₽):') || '0', 10);
-    const duration = parseInt(prompt('Длительность (мин):') || '60', 10);
-    if (!name || isNaN(price) || isNaN(duration)) {
-      alert('Некорректные данные');
-      return;
-    }
-    const newService: Service = { id: Date.now().toString(), name, price, durationMinutes: duration };
-    onUpdateTenant({ services: [...tenant.services, newService] });
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [isAddingService, setIsAddingService] = useState(false);
+  const [editingServiceForm, setEditingServiceForm] = useState({ name: '', price: '', durationMinutes: '' });
+
+  const startAddingService = () => {
+    setEditingServiceId(null);
+    setIsAddingService(true);
+    setEditingServiceForm({ name: '', price: '', durationMinutes: '60' });
   };
 
-  const handleEditService = (serviceId: string) => {
-    const service = tenant.services.find(s => s.id === serviceId);
-    if (!service) return;
+  const startEditingService = (service: Service) => {
+    setIsAddingService(false);
+    if (editingServiceId === service.id) {
+      setEditingServiceId(null);
+    } else {
+      setEditingServiceId(service.id);
+      setEditingServiceForm({
+        name: service.name,
+        price: service.price.toString(),
+        durationMinutes: service.durationMinutes.toString()
+      });
+    }
+  };
+
+  const handleSaveService = () => {
+    const price = parseInt(editingServiceForm.price, 10);
+    const durationCount = parseInt(editingServiceForm.durationMinutes, 10);
     
-    const action = prompt(`Редактируем "${service.name}". Введите "edit" чтобы изменить, "delete" чтобы удалить:`, 'edit');
-    if (action === 'delete') {
-      if (confirm(`Точно удалить "${service.name}"?`)) {
-        onUpdateTenant({ services: tenant.services.filter(s => s.id !== serviceId) });
-      }
+    if (!editingServiceForm.name || isNaN(price) || isNaN(durationCount)) {
+      alert('Заполните все поля корректно');
       return;
-    } else if (action === 'edit') {
-      const name = prompt('Название услуги:', service.name) || service.name;
-      const price = parseInt(prompt('Стоимость (₽):', service.price.toString()) || '0', 10) || service.price;
-      const duration = parseInt(prompt('Длительность (мин):', service.durationMinutes.toString()) || '60', 10) || service.durationMinutes;
-      
-      const newServices = tenant.services.map(s => s.id === serviceId ? { ...s, name, price, durationMinutes: duration } : s);
+    }
+
+    if (isAddingService) {
+      const newService: Service = { 
+        id: Date.now().toString(), 
+        name: editingServiceForm.name, 
+        price, 
+        durationMinutes: durationCount 
+      };
+      onUpdateTenant({ services: [...tenant.services, newService] });
+      setIsAddingService(false);
+    } else if (editingServiceId) {
+      const newServices = tenant.services.map(s => 
+        s.id === editingServiceId ? { ...s, name: editingServiceForm.name, price, durationMinutes: durationCount } : s
+      );
       onUpdateTenant({ services: newServices });
+      setEditingServiceId(null);
+    }
+  };
+
+  const handleDeleteService = (serviceId: string) => {
+    if (confirm('Точно удалить эту услугу?')) {
+      onUpdateTenant({ services: tenant.services.filter(s => s.id !== serviceId) });
+      setEditingServiceId(null);
     }
   };
 
@@ -295,28 +320,97 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
             <div className="space-y-4 animate-slide-up">
                <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-zinc-100">Ваши услуги</h3>
-                <button onClick={handleAddService} className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl hover:bg-purple-500/20 transition-colors border border-purple-500/20 active:scale-95">
-                  <Plus className="w-5 h-5" />
+                <button 
+                  onClick={startAddingService} 
+                  className={`p-2.5 rounded-xl transition-colors border active:scale-95 ${isAddingService ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border-purple-500/20'}`}
+                >
+                  <Plus className={`w-5 h-5 transition-transform ${isAddingService ? 'rotate-45' : ''}`} />
                 </button>
               </div>
 
               <div className="space-y-3">
-                {tenant.services.length === 0 && <p className="text-zinc-500 text-sm text-center py-4 text-full">Нет добавленных услуг</p>}
-                {tenant.services.map((service) => (
-                  <div key={service.id} className="bg-zinc-800/40 p-4 rounded-2xl border border-white/5 flex justify-between items-center group hover:bg-zinc-800/60 transition-colors">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-zinc-200 text-[14px] group-hover:text-purple-300 transition-colors pr-2">
-                        {service.name}
-                      </h4>
-                      <p className="text-zinc-500 text-[12px] font-medium mt-1.5 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" /> {service.durationMinutes} мин 
-                        <span className="w-1 h-1 bg-zinc-700 rounded-full mx-0.5" /> 
-                        {service.price} ₽
-                      </p>
+                {isAddingService && (
+                  <div className="bg-zinc-900 border border-purple-500/30 p-4 rounded-2xl animate-fade-in shadow-lg">
+                    <h4 className="text-[14px] font-semibold text-purple-300 mb-3">Добавление услуги</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Название</label>
+                        <input value={editingServiceForm.name} onChange={e => setEditingServiceForm(p => ({...p, name: e.target.value}))} placeholder="Например: Классический маникюр" type="text" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₽)</label>
+                          <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" placeholder="1500" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Время (мин)</label>
+                          <input value={editingServiceForm.durationMinutes} onChange={e => setEditingServiceForm(p => ({...p, durationMinutes: e.target.value}))} type="number" placeholder="60" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-4 pt-2 border-t border-white/5">
+                        <button onClick={handleSaveService} className="flex-1 py-2 rounded-xl bg-purple-500 text-white text-[13px] font-bold hover:bg-purple-600 transition-colors shadow-sm">
+                          Сохранить
+                        </button>
+                        <button onClick={() => setIsAddingService(false)} className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-[13px] font-bold hover:bg-zinc-700 transition-colors shadow-sm border border-white/5">
+                          Отмена
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={() => handleEditService(service.id)} className="p-2.5 bg-zinc-900 rounded-xl border border-white/5 text-zinc-400 hover:text-white hover:border-white/10 transition-all active:scale-95 shadow-sm">
-                      <Settings className="w-4 h-4" />
-                    </button>
+                  </div>
+                )}
+
+                {tenant.services.length === 0 && !isAddingService && <p className="text-zinc-500 text-sm text-center py-4 text-full">Нет добавленных услуг</p>}
+                
+                {tenant.services.map((service) => (
+                  <div key={service.id} className="bg-zinc-800/40 rounded-2xl border border-white/5 overflow-hidden transition-colors">
+                    <div className="p-4 flex justify-between items-center group hover:bg-zinc-800/60 transition-colors">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-zinc-200 text-[14px] group-hover:text-purple-300 transition-colors pr-2">
+                          {service.name}
+                        </h4>
+                        <p className="text-zinc-500 text-[12px] font-medium mt-1.5 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" /> {service.durationMinutes} мин 
+                          <span className="w-1 h-1 bg-zinc-700 rounded-full mx-0.5" /> 
+                          {service.price} ₽
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => startEditingService(service)} 
+                        className={`p-2.5 rounded-xl border transition-all active:scale-95 shadow-sm ${editingServiceId === service.id ? 'bg-zinc-700 border-white/10 text-white' : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-white hover:border-white/10'}`}
+                      >
+                        <Settings className={`w-4 h-4 transition-transform ${editingServiceId === service.id ? 'rotate-90' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Expandable Edit Menu */}
+                    {editingServiceId === service.id && (
+                      <div className="px-4 pb-4 pt-2 border-t border-white/5 bg-zinc-900/30 animate-fade-in">
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Название услуги</label>
+                            <input value={editingServiceForm.name} onChange={e => setEditingServiceForm(p => ({...p, name: e.target.value}))} type="text" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="flex-1">
+                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₽)</label>
+                              <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Время (мин)</label>
+                              <input value={editingServiceForm.durationMinutes} onChange={e => setEditingServiceForm(p => ({...p, durationMinutes: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-4 pt-2">
+                            <button onClick={handleSaveService} className="flex-1 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[13px] font-bold hover:bg-purple-500/30 transition-colors shadow-sm">
+                              Сохранить
+                            </button>
+                            <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-[13px] font-bold hover:bg-red-500/20 transition-colors shadow-sm">
+                              Удалить
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
