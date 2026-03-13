@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { clientName, serviceName, date, time, price, username } = req.body;
+    const { clientName, telegramId, serviceName, date, time, price, username } = req.body;
     
     if (!clientName || !date || !time) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -60,10 +60,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const handleText = username ? ` (@${username})` : '';
+    const nameMention = telegramId ? `[${clientName}](tg://user?id=${telegramId})` : clientName;
     const priceText = price ? `\n💰 *Стоимость:* ${price} ₽` : '';
 
     const message = `🔔 *Новая запись!*\n\n` +
-      `👤 *Клиент:* ${clientName}${handleText}\n` +
+      `👤 *Клиент:* ${nameMention}${handleText}\n` +
       `💅 *Услуга:* ${serviceName}\n` +
       `📅 *Дата:* ${date}\n` +
       `⏰ *Время:* ${time}${priceText}\n\n` +

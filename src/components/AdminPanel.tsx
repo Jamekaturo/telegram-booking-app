@@ -31,7 +31,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
             start_time,
             status,
             client_comment,
-            clients ( first_name, last_name, username ),
+            clients ( first_name, last_name, username, telegram_id ),
             services ( name )
           `)
           .order('appointment_date', { ascending: true })
@@ -327,11 +327,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                         <div>
                           <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
                             {clientName}
-                            {handle && (
+                            {handle ? (
                               <a href={`https://t.me/${handle.replace('@','')}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
                                 {handle}
                               </a>
-                            )}
+                            ) : appt.clients?.telegram_id ? (
+                              <a href={`tg://user?id=${appt.clients.telegram_id}`} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
+                                Написать
+                              </a>
+                            ) : null}
                           </p>
                           <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5">
                             <div className={`w-1 h-1 rounded-full opacity-80 ${appt.status === 'confirmed' ? 'bg-green-500' : 'bg-purple-500'}`} />

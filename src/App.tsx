@@ -121,6 +121,7 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             clientName: `${firstName} ${lastName}`.trim(),
+            telegramId: tgId,
             username: username,
             serviceName: selectedServices.map(s => s.name).join(', '),
             date: format(selectedDate, 'dd.MM.yyyy'),
