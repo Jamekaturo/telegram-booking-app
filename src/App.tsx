@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 
 function App() {
-  const { tenant, loading, error } = useTenant();
+  const { tenant, setTenant, loading, error } = useTenant();
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -116,7 +116,10 @@ function App() {
           </main>
         ) : (
           <main className="max-w-[480px] mx-auto">
-            <AdminPanel tenant={tenant} />
+            <AdminPanel 
+              tenant={tenant} 
+              onUpdateTenant={(updates) => setTenant(prev => prev ? { ...prev, ...updates } : prev)}
+            />
           </main>
         )}
       </div>

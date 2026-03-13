@@ -90,5 +90,5 @@ export const useTenant = () => {
     }
   }, []);
 
-  return { tenant, loading, error };
+  return { tenant, setTenant, loading, error };
 };
