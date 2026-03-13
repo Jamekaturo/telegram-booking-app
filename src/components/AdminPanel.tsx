@@ -339,7 +339,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                             ) : appt.clients?.telegram_id ? (
                               <button onClick={(e) => {
                                 e.preventDefault();
-                                window.location.href = `tg://openmessage?user_id=${appt.clients.telegram_id}`;
+                                const tg = (window as any).Telegram?.WebApp;
+                                if (tg?.openTelegramLink) tg.openTelegramLink(`tg://user?id=${appt.clients.telegram_id}`);
+                                else window.location.href = `tg://user?id=${appt.clients.telegram_id}`;
                               }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
                                 Написать
                               </button>
