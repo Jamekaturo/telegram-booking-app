@@ -68,6 +68,7 @@ function App() {
       const lastName = tgUser?.last_name || 'Клиент';
       const username = tgUser?.username || 'testclient';
 
+
       // Пытаемся найти или создать клиента
       let { data: clientData, error: clientError } = await supabase
         .from('clients')
@@ -108,8 +109,23 @@ function App() {
       const { error: apptError } = await supabase.from('appointments').insert(appointmentsToInsert);
       if (apptError) throw apptError;
 
-
-
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientName: `${firstName} ${lastName}`.trim(),
+            username: username,
+            serviceName: selectedServices.map(s => s.name).join(', '),
+            date: format(selectedDate, 'dd.MM.yyyy'),
+            time: selectedSlot,
+            price: totalPrice
+          })
+        });
+      } catch (e) {
+        console.error('Failed to notify admin', e);
+      }
+      
       if (webApp && webApp.showAlert) {
         webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`, () => {
           webApp.close();
