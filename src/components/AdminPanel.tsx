@@ -328,13 +328,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                           <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
                             {clientName}
                             {handle ? (
-                              <a href={`https://t.me/${handle.replace('@','')}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
+                              <button onClick={(e) => {
+                                e.preventDefault();
+                                const tg = (window as any).Telegram?.WebApp;
+                                if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/${handle.replace('@','')}`);
+                                else window.open(`https://t.me/${handle.replace('@','')}`, '_blank');
+                              }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
                                 {handle}
-                              </a>
+                              </button>
                             ) : appt.clients?.telegram_id ? (
-                              <a href={`tg://user?id=${appt.clients.telegram_id}`} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center">
+                              <button onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = `tg://openmessage?user_id=${appt.clients.telegram_id}`;
+                              }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
                                 Написать
-                              </a>
+                              </button>
                             ) : null}
                           </p>
                           <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5">
