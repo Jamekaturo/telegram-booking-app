@@ -13,9 +13,10 @@ export const useTenant = () => {
     const fetchTenantData = async () => {
       setLoading(true);
       try {
-        const [ { data: servicesData, error: servicesError }, { data: availabilityData, error: availabilityError } ] = await Promise.all([
+        const [ { data: servicesData, error: servicesError }, { data: availabilityData, error: availabilityError }, { data: appointmentsData, error: appointmentsError } ] = await Promise.all([
            supabase.from('services').select('*').order('created_at', { ascending: true }),
-           supabase.from('availability').select('*')
+           supabase.from('availability').select('*'),
+           supabase.from('appointments').select('appointment_date, start_time, status, created_at')
         ]);
 
         if (servicesError) throw servicesError;
@@ -43,6 +44,24 @@ export const useTenant = () => {
           }
         });
 
+        const bookedSlots: Record<string, string[]> = {};
+        const now = Date.now();
+        (appointmentsData || []).forEach(appt => {
+           const dateStr = appt.appointment_date;
+           const slot = appt.start_time.substring(0, 5);
+           const createdAtTime = new Date(appt.created_at).getTime();
+           
+           const isConfirmed = appt.status === 'confirmed';
+           const isPendingAndRecent = appt.status === 'pending' && (now - createdAtTime < 5 * 60 * 1000); // 5 minutes
+           
+           if (isConfirmed || isPendingAndRecent) {
+             if (!bookedSlots[dateStr]) bookedSlots[dateStr] = [];
+             if (!bookedSlots[dateStr].includes(slot)) {
+               bookedSlots[dateStr].push(slot);
+             }
+           }
+        });
+
         // Use standard ID and mocked theme info until DB handles it
         setTenant({
           id: 'master_1',
@@ -54,7 +73,8 @@ export const useTenant = () => {
           },
           services,
           availableDates,
-          timeSlots
+          timeSlots,
+          bookedSlots
         });
         
       } catch (err: any) {

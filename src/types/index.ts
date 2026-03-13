@@ -16,4 +16,5 @@ export interface Tenant {
   services: Service[];
   availableDates: string[]; // ISO format YYYY-MM-DD
   timeSlots: Record<string, string[]>; // { '2023-10-25': ['10:00', '11:00'] }
+  bookedSlots?: Record<string, string[]>; // { '2023-10-25': ['10:00'] }
 }

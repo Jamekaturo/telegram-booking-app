@@ -43,21 +43,26 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
       <div className="grid grid-cols-4 gap-2.5">
         {slots.map((slot) => {
           const isSelected = selectedSlot === slot;
+          const isBooked = tenant.bookedSlots?.[dateStr]?.includes(slot);
+
           return (
             <button
               key={slot}
-              onClick={() => onSelectSlot(slot)}
+              onClick={() => !isBooked && onSelectSlot(slot)}
+              disabled={isBooked}
               className={twMerge(
                 clsx(
                   "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-all duration-300 border relative overflow-hidden",
-                  isSelected
-                    ? "text-white shadow-[0_0_20px_rgba(0,0,0,0.15)] border-transparent scale-[1.03] z-10"
-                    : "bg-zinc-800/40 text-zinc-300 border-white/5 hover:bg-zinc-800/80 hover:border-white/10 active:scale-95 z-0"
+                  isBooked 
+                    ? "bg-zinc-800/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed"
+                    : isSelected
+                      ? "text-white shadow-[0_0_20px_rgba(0,0,0,0.15)] border-transparent scale-[1.03] z-10"
+                      : "bg-zinc-800/40 text-zinc-300 border-white/5 hover:bg-zinc-800/80 hover:border-white/10 active:scale-95 z-0"
                 )
               )}
-              style={isSelected ? { background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)` } : {}}
+              style={isSelected && !isBooked ? { background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)` } : {}}
             >
-              {isSelected && (
+              {isSelected && !isBooked && (
                 <div className="absolute inset-0 w-full h-full bg-white opacity-10" />
               )}
               <span className="relative z-10 drop-shadow-sm">{slot}</span>
