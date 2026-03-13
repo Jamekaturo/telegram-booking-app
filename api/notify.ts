@@ -1,8 +1,13 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Telegraf } from 'telegraf';
+import { createClient } from '@supabase/supabase-js';
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const adminChatId = process.env.ADMIN_CHAT_ID;
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Настройка CORS для вызова из браузера
@@ -19,8 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  if (!token || !adminChatId) {
-    console.error('Missing TELEGRAM_BOT_TOKEN or ADMIN_CHAT_ID environment variables');
+  if (!token) {
+    console.error('Missing TELEGRAM_BOT_TOKEN environment variable');
     return res.status(500).json({ error: 'Server misconfiguration' });
   }
 
@@ -33,6 +38,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const bot = new Telegraf(token);
 
+    // Fetch the admin's telegram_id from supabase
+    let targetChatId = adminChatId;
+    if (supabaseUrl && supabaseKey) {
+       const { data: adminUser, error: adminError } = await supabase
+         .from('clients')
+         .select('telegram_id')
+         .eq('role', 'admin')
+         .single();
+       
+       if (adminUser?.telegram_id) {
+          targetChatId = adminUser.telegram_id;
+       } else if (adminError) {
+          console.error('Failed to fetch admin from DB:', adminError);
+       }
+    }
+
+    if (!targetChatId) {
+       console.error('No admin Chat ID could be found from DB or environment.');
+       return res.status(500).json({ error: 'No admin Chat ID configured' });
+    }
+
     const handleText = username ? ` (@${username})` : '';
     const priceText = price ? `\n💰 *Стоимость:* ${price} ₽` : '';
 
@@ -43,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `⏰ *Время:* ${time}${priceText}\n\n` +
       `Зайдите в Админ-панель (кнопка ⚙️) внутри вашего бота, чтобы подтвердить!`;
 
-    await bot.telegram.sendMessage(adminChatId, message, { parse_mode: 'Markdown' });
+    await bot.telegram.sendMessage(targetChatId, message, { parse_mode: 'Markdown' });
 
     return res.status(200).json({ success: true });
   } catch (err: any) {
