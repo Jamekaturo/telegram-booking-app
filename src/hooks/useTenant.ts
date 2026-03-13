@@ -11,8 +11,12 @@ export const useTenant = () => {
     // https://core.telegram.org/bots/webapps#webappinitdata
     const webApp = (window as any).Telegram?.WebApp;
     
-    // Если мы запускаем локально или нет start_param, берём тестовый ID "master_1"
-    const startParam = webApp?.initDataUnsafe?.start_param || 'master_1';
+    // Check URL parameters for tenant fallback (used when opened via Inline Button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTenant = urlParams.get('tenant');
+
+    // Если мы запускаем локально или нет start_param, берём параметр из URL или тестовый ID "master_1"
+    const startParam = webApp?.initDataUnsafe?.start_param || urlTenant || 'master_1';
 
     // Имитация запроса к API для получения данных арендатора (мастера) по ID
     const fetchTenantData = async (tenantId: string) => {
