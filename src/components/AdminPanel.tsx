@@ -36,14 +36,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     setLocalAvailable(tenant.availableDates);
   }, [tenant.timeSlots, tenant.availableDates]);
 
+  const [fastMode, setFastMode] = useState(false);
+
   const dateStr = tempDate ? format(tempDate, 'yyyy-MM-dd') : null;
   const currentSlots = (dateStr ? localSlots[dateStr] : []) || [];
-  const isDayOff = dateStr ? !localAvailable.includes(dateStr) : false;
+  const isWorkingDay = dateStr ? localAvailable.includes(dateStr) : false;
 
   const allTimes = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
 
   const handleToggleSlot = (time: string) => {
-    if (!dateStr || isDayOff) return;
+    if (!dateStr || !isWorkingDay) return;
     setLocalSlots(prev => {
       const existing = prev[dateStr] || [];
       if (existing.includes(time)) {
@@ -54,9 +56,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     });
   };
 
-  const handleToggleDayOff = () => {
+  const handleToggleWorkingDay = () => {
     if (!dateStr) return;
-    if (isDayOff) {
+    if (!isWorkingDay) {
       setLocalAvailable(prev => [...prev, dateStr]);
       setLocalSlots(prev => {
         if (!prev[dateStr] || prev[dateStr].length === 0) {
@@ -67,6 +69,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     } else {
       setLocalAvailable(prev => prev.filter(d => d !== dateStr));
     }
+  };
+
+  const handleCalendarClick = (d: Date) => {
+    const dStr = format(d, 'yyyy-MM-dd');
+    if (fastMode) {
+      const isWork = localAvailable.includes(dStr);
+      if (isWork) {
+         setLocalAvailable(prev => prev.filter(x => x !== dStr));
+      } else {
+         setLocalAvailable(prev => [...prev, dStr]);
+         setLocalSlots(prev => {
+            if (!prev[dStr] || prev[dStr].length === 0) {
+               return { ...prev, [dStr]: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'] };
+            }
+            return prev;
+         });
+      }
+    }
+    setTempDate(d);
   };
 
   const handleSaveSchedule = () => {
@@ -204,18 +225,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                 Выберите любую дату для настройки рабочих часов.
               </p>
               
+              <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 p-3 rounded-2xl mb-4">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-500/20 rounded-[10px] text-purple-400">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-[14px] font-bold text-purple-100">Быстрый режим</h4>
+                      <p className="text-[12px] text-purple-300">Клик по дню = вкл/выкл рабочий день</p>
+                    </div>
+                 </div>
+                 <div 
+                    onClick={() => setFastMode(!fastMode)}
+                    className={`w-12 h-7 rounded-full flex items-center p-1 cursor-pointer transition-colors border border-purple-500/30 shadow-inner ${fastMode ? 'bg-purple-500' : 'bg-purple-900/50 hover:bg-purple-800/50'}`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${fastMode ? 'translate-x-5' : ''}`} />
+                  </div>
+              </div>
+
               <div className="bg-zinc-950/80 p-2 sm:p-4 rounded-3xl border border-white/5 shadow-inner">
-                <Calendar tenant={{...tenant, availableDates: localAvailable} as Tenant} selectedDate={tempDate} onSelectDate={setTempDate} isAdmin />
+                <Calendar tenant={{...tenant, availableDates: localAvailable} as Tenant} selectedDate={tempDate} onSelectDate={handleCalendarClick} isAdmin />
               </div>
 
               {tempDate && (
                 <div className="mt-6 p-5 bg-zinc-800/40 rounded-3xl border border-white/5 animate-slide-up shadow-lg">
-                  <h4 className="text-zinc-100 font-semibold mb-4 text-[15px] flex items-center justify-between">
-                    <span>
-                      Окна на <span className="text-purple-400">{format(tempDate, 'd MMMM', { locale: ru })}</span>
-                    </span>
-                  </h4>
-                  <div className={`grid grid-cols-4 gap-2 mb-5 transition-opacity duration-300 ${isDayOff ? 'opacity-30 pointer-events-none' : ''}`}>
+                  <div className="flex items-center justify-between mb-5">
+                    <h4 className="text-zinc-100 font-semibold text-[16px]">
+                      Окна на <span className="text-purple-400 font-bold">{format(tempDate, 'd MMMM', { locale: ru })}</span>
+                    </h4>
+                    <div className="flex items-center gap-2">
+                       <span className="text-[12px] font-medium text-zinc-400 hidden sm:block">Рабочий день</span>
+                       <div 
+                         onClick={handleToggleWorkingDay}
+                         className={`w-12 h-7 rounded-full flex items-center p-1 cursor-pointer transition-colors border border-white/5 shadow-inner ${isWorkingDay ? 'bg-purple-500' : 'bg-zinc-700/80 hover:bg-zinc-600'}`}
+                       >
+                         <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${isWorkingDay ? 'translate-x-5' : ''}`} />
+                       </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`grid grid-cols-4 gap-2 transition-all duration-300 ${!isWorkingDay ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
                     {allTimes.map(time => {
                       const isActive = currentSlots.includes(time);
                       return (
@@ -232,16 +281,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                         </button>
                       );
                     })}
-                  </div>
-                  
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-zinc-400">Сделать день выходным</span>
-                    <div 
-                      onClick={handleToggleDayOff}
-                      className={`w-11 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors border border-white/5 ${isDayOff ? 'bg-purple-500/50' : 'bg-zinc-700/50 hover:bg-zinc-700'}`}
-                    >
-                      <div className={`w-4 h-4 bg-zinc-400 rounded-full shadow-sm transition-transform ${isDayOff ? 'translate-x-5 bg-white' : ''}`} />
-                    </div>
                   </div>
                 </div>
               )}
