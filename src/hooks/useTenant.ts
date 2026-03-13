@@ -45,16 +45,11 @@ export const useTenant = () => {
         });
 
         const bookedSlots: Record<string, string[]> = {};
-        const now = Date.now();
         (appointmentsData || []).forEach(appt => {
            const dateStr = appt.appointment_date;
            const slot = appt.start_time.substring(0, 5);
-           const createdAtTime = new Date(appt.created_at).getTime();
            
-           const isConfirmed = appt.status === 'confirmed';
-           const isPendingAndRecent = appt.status === 'pending' && (now - createdAtTime < 5 * 60 * 1000); // 5 minutes
-           
-           if (isConfirmed || isPendingAndRecent) {
+           if (appt.status === 'confirmed') {
              if (!bookedSlots[dateStr]) bookedSlots[dateStr] = [];
              if (!bookedSlots[dateStr].includes(slot)) {
                bookedSlots[dateStr].push(slot);

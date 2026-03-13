@@ -108,15 +108,7 @@ function App() {
       const { error: apptError } = await supabase.from('appointments').insert(appointmentsToInsert);
       if (apptError) throw apptError;
 
-      // Опережающее локальное обновление состояния, чтобы слот сразу стал недоступен
-      setTenant(prev => {
-        if (!prev) return prev;
-        const newBooked = { ...(prev.bookedSlots || {}) };
-        const dateStr = format(selectedDate, 'yyyy-MM-dd');
-        if (!newBooked[dateStr]) newBooked[dateStr] = [];
-        newBooked[dateStr].push(selectedSlot);
-        return { ...prev, bookedSlots: newBooked };
-      });
+
 
       if (webApp && webApp.showAlert) {
         webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`, () => {

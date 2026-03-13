@@ -51,11 +51,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     }
   }, [activeTab]);
 
-  const handleConfirmAppt = async (id: string) => {
+  const handleConfirmAppt = async (id: string, dateStr: string, timeStr: string) => {
     try {
       const { error } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id);
       if (error) throw error;
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' } : a));
+      
+      const newBooked = { ...(tenant.bookedSlots || {}) };
+      if (!newBooked[dateStr]) newBooked[dateStr] = [];
+      const slot = timeStr.substring(0, 5);
+      if (!newBooked[dateStr].includes(slot)) {
+        newBooked[dateStr].push(slot);
+      }
+      onUpdateTenant({ bookedSlots: newBooked });
     } catch (err: any) {
       alert('Ошибка при подтверждении: ' + err.message);
     }
@@ -338,7 +346,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                       </div>
                       {appt.status === 'pending' && (
                         <div className="flex gap-2 mt-2">
-                          <button onClick={() => handleConfirmAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
+                          <button onClick={() => handleConfirmAppt(appt.id, appt.appointment_date, appt.start_time)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
                             Подтвердить
                           </button>
                           <button onClick={() => handleCancelAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-500 text-[13px] font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all border border-red-500/20 shadow-sm active:scale-95">
