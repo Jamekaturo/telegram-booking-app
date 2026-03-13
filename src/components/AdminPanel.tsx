@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant, Service } from '../types';
+import { supabase } from '../lib/supabase';
 import { Calendar as CalendarIcon, List, Clock, Settings, UserCircle, Plus, X } from 'lucide-react';
 import { Calendar } from './Calendar';
 import { format } from 'date-fns';
@@ -90,9 +91,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     setTempDate(d);
   };
 
-  const handleSaveSchedule = () => {
-    onUpdateTenant({ timeSlots: localSlots, availableDates: localAvailable });
-    alert('Расписание успешно сохранено!');
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+  const handleSaveSchedule = async () => {
+    setIsSavingSchedule(true);
+    try {
+      // Подготовим данные для upsert в Supabase
+      const availabilityRecords: any[] = [];
+      const allDatesToSave = new Set([ ...Object.keys(localSlots), ...localAvailable ]);
+
+      allDatesToSave.forEach(dateStr => {
+        const isDayOff = !localAvailable.includes(dateStr);
+        availabilityRecords.push({
+          work_date: dateStr,
+          time_slots: isDayOff ? [] : (localSlots[dateStr] || []),
+          is_day_off: isDayOff
+        });
+      });
+
+      if (availabilityRecords.length > 0) {
+        const { error } = await supabase.from('availability').upsert(availabilityRecords, { onConflict: 'work_date' });
+        if (error) throw error;
+      }
+
+      onUpdateTenant({ timeSlots: localSlots, availableDates: localAvailable });
+      alert('Расписание успешно сохранено в базе!');
+    } catch (err: any) {
+      alert('Ошибка при сохранении расписания: ' + err.message);
+    } finally {
+      setIsSavingSchedule(false);
+    }
   };
 
   // --- Services State ---
@@ -120,7 +148,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     }
   };
 
-  const handleSaveService = () => {
+  const [isSavingService, setIsSavingService] = useState(false);
+
+  const handleSaveService = async () => {
     const price = parseInt(editingServiceForm.price, 10);
     const durationCount = parseInt(editingServiceForm.durationMinutes, 10);
     
@@ -129,28 +159,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
       return;
     }
 
-    if (isAddingService) {
-      const newService: Service = { 
-        id: Date.now().toString(), 
-        name: editingServiceForm.name, 
-        price, 
-        durationMinutes: durationCount 
-      };
-      onUpdateTenant({ services: [...tenant.services, newService] });
-      setIsAddingService(false);
-    } else if (editingServiceId) {
-      const newServices = tenant.services.map(s => 
-        s.id === editingServiceId ? { ...s, name: editingServiceForm.name, price, durationMinutes: durationCount } : s
-      );
-      onUpdateTenant({ services: newServices });
-      setEditingServiceId(null);
+    setIsSavingService(true);
+    try {
+      if (isAddingService) {
+        const { data, error } = await supabase.from('services').insert([
+          { name: editingServiceForm.name, price, duration_minutes: durationCount }
+        ]).select().single();
+
+        if (error) throw error;
+
+        const newService: Service = { 
+          id: data.id, 
+          name: data.name, 
+          price: Number(data.price), 
+          durationMinutes: data.duration_minutes 
+        };
+        onUpdateTenant({ services: [...tenant.services, newService] });
+        setIsAddingService(false);
+      } else if (editingServiceId) {
+        const { error } = await supabase.from('services').update({
+          name: editingServiceForm.name, 
+          price, 
+          duration_minutes: durationCount
+        }).eq('id', editingServiceId);
+
+        if (error) throw error;
+
+        const newServices = tenant.services.map(s => 
+          s.id === editingServiceId ? { ...s, name: editingServiceForm.name, price, durationMinutes: durationCount } : s
+        );
+        onUpdateTenant({ services: newServices });
+        setEditingServiceId(null);
+      }
+    } catch (err: any) {
+      alert('Ошибка при сохранении услуги: ' + err.message);
+    } finally {
+      setIsSavingService(false);
     }
   };
 
-  const handleDeleteService = (serviceId: string) => {
+  const handleDeleteService = async (serviceId: string) => {
     if (confirm('Точно удалить эту услугу?')) {
-      onUpdateTenant({ services: tenant.services.filter(s => s.id !== serviceId) });
-      setEditingServiceId(null);
+      try {
+        const { error } = await supabase.from('services').delete().eq('id', serviceId);
+        if (error) throw error;
+
+        onUpdateTenant({ services: tenant.services.filter(s => s.id !== serviceId) });
+        setEditingServiceId(null);
+      } catch (err: any) {
+        alert('Ошибка удаления: ' + err.message);
+      }
     }
   };
 
@@ -310,8 +368,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                 </div>
               )}
 
-              <button onClick={handleSaveSchedule} className="w-full mt-2 py-3.5 rounded-2xl bg-zinc-100 text-zinc-900 font-bold text-[14px] hover:bg-white transition-colors border border-transparent active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                Сохранить расписание
+              <button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="w-full mt-2 py-3.5 rounded-2xl bg-zinc-100 text-zinc-900 font-bold text-[14px] hover:bg-white transition-colors border border-transparent active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)] disabled:opacity-50">
+                {isSavingSchedule ? 'Сохранение...' : 'Сохранить расписание'}
               </button>
             </div>
           )}
@@ -348,8 +406,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                         </div>
                       </div>
                       <div className="flex gap-2 mt-4 pt-2 border-t border-white/5">
-                        <button onClick={handleSaveService} className="flex-1 py-2 rounded-xl bg-purple-500 text-white text-[13px] font-bold hover:bg-purple-600 transition-colors shadow-sm">
-                          Сохранить
+                        <button onClick={handleSaveService} disabled={isSavingService} className="flex-1 py-2 rounded-xl bg-purple-500 text-white text-[13px] font-bold hover:bg-purple-600 transition-colors shadow-sm disabled:opacity-50">
+                          {isSavingService ? 'Сохранение...' : 'Сохранить'}
                         </button>
                         <button onClick={() => setIsAddingService(false)} className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-[13px] font-bold hover:bg-zinc-700 transition-colors shadow-sm border border-white/5">
                           Отмена
@@ -401,8 +459,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                             </div>
                           </div>
                           <div className="flex gap-2 mt-4 pt-2">
-                            <button onClick={handleSaveService} className="flex-1 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[13px] font-bold hover:bg-purple-500/30 transition-colors shadow-sm">
-                              Сохранить
+                            <button onClick={handleSaveService} disabled={isSavingService} className="flex-1 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[13px] font-bold hover:bg-purple-500/30 transition-colors shadow-sm disabled:opacity-50">
+                              {isSavingService ? 'Сохранение...' : 'Сохранить'}
                             </button>
                             <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-[13px] font-bold hover:bg-red-500/20 transition-colors shadow-sm">
                               Удалить
