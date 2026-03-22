@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTenant } from './hooks/useTenant';
 import { Header } from './components/Header';
 import { ServiceList } from './components/ServiceList';
@@ -20,23 +20,37 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950">
-        <div className="w-12 h-12 border-4 border-zinc-800 border-t-purple-500 rounded-full animate-spin mb-4" />
-        <p className="text-zinc-400 font-medium">Загрузка данных мастера...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-main)]">
+        <div className="w-12 h-12 border-4 border-[var(--border-main)] border-t-[var(--accent-main)] rounded-full animate-spin mb-4" />
+        <p className="text-[var(--text-secondary)] font-medium">Загрузка данных мастера...</p>
       </div>
     );
   }
 
   if (error || !tenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-center p-6 bg-zinc-900 rounded-3xl shadow-sm border border-red-900/50 max-w-sm mx-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main)]">
+        <div className="text-center p-6 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--border-main)] max-w-sm mx-4">
           <h2 className="text-xl font-bold text-red-500 mb-2">Ошибка</h2>
-          <p className="text-zinc-400">{error || "Нет данных"}</p>
+          <p className="text-[var(--text-secondary)]">{error || "Нет данных"}</p>
         </div>
       </div>
     );
   }
+
+  useEffect(() => {
+    if (tenant) {
+      const themes = ['midnight', 'snow', 'concrete', 'blossom', 'cyberpunk'];
+      let hash = 0;
+      for (let i = 0; i < tenant.id.length; i++) {
+        hash = tenant.id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const themeIndex = Math.abs(hash) % themes.length;
+      
+      const savedTheme = localStorage.getItem('app_theme');
+      document.documentElement.setAttribute('data-theme', savedTheme || themes[themeIndex]);
+    }
+  }, [tenant]);
 
   const handleToggleService = (id: string) => {
     setSelectedServiceIds((prev) => 
@@ -153,12 +167,12 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#040405] pb-[140px] font-sans text-zinc-100 relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden">
       {/* Toggler Button */}
       {tenant && (
         <button
           onClick={() => setMode(mode === 'booking' ? 'admin' : 'booking')}
-          className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-zinc-900 border border-white/10 shadow-lg text-zinc-400 hover:text-white transition-colors active:scale-95"
+          className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-main)] shadow-lg text-[var(--text-secondary)] hover:text-[var(--text-main)] transition-colors active:scale-95"
         >
           {mode === 'booking' ? <SettingsIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
         </button>

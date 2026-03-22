@@ -15,7 +15,7 @@ interface TimeSlotsProps {
 export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, selectedSlot, onSelectSlot }) => {
   if (!selectedDate) {
     return (
-      <div className="p-4 text-center text-zinc-500 text-sm italic mt-2">
+      <div className="p-4 text-center text-[var(--text-secondary)] text-sm italic mt-2">
         Выберите дату, чтобы увидеть доступное время
       </div>
     );
@@ -26,19 +26,19 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
 
   if (slots.length === 0) {
     return (
-      <div className="p-4 text-center text-zinc-400 text-sm bg-zinc-900 rounded-2xl mx-4 mt-4 border border-zinc-800">
+      <div className="p-4 text-center text-[var(--text-secondary)] text-sm bg-[var(--bg-card)] rounded-2xl mx-4 mt-4 border border-[var(--border-main)]">
         Нет свободного времени на эту дату
       </div>
     );
   }
 
   return (
-    <div className="p-5 bg-zinc-900/40 backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/5 mt-4 transition-all duration-300">
+    <div className="p-5 bg-[var(--bg-card)] backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] mt-4 transition-all duration-300">
       <div className="flex items-center gap-2 mb-5">
-        <div className="w-8 h-8 rounded-full bg-zinc-800/50 flex items-center justify-center border border-white/5">
-          <Clock className="w-4 h-4 text-zinc-300" />
+        <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
+          <Clock className="w-4 h-4 text-[var(--text-main)]" />
         </div>
-        <h3 className="text-[17px] font-bold text-zinc-100 tracking-wide">Доступное время</h3>
+        <h3 className="text-[17px] font-bold text-[var(--text-main)] tracking-wide">Доступное время</h3>
       </div>
       <div className="grid grid-cols-4 gap-2.5">
         {slots.map((slot) => {
@@ -54,13 +54,13 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
                 clsx(
                   "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-all duration-300 border relative overflow-hidden",
                   isBooked 
-                    ? "bg-zinc-800/20 text-zinc-600 border-white/5 opacity-50 cursor-not-allowed"
+                    ? "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-main)] opacity-50 cursor-not-allowed"
                     : isSelected
-                      ? "text-white shadow-[0_0_20px_rgba(0,0,0,0.15)] border-transparent scale-[1.03] z-10"
-                      : "bg-zinc-800/40 text-zinc-300 border-white/5 hover:bg-zinc-800/80 hover:border-white/10 active:scale-95 z-0"
+                      ? "text-[var(--accent-text)] shadow-[var(--glow-shadow,0_0_20px_rgba(0,0,0,0.15))] border-transparent scale-[1.03] z-10"
+                      : "bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-main)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-hover)] active:scale-95 z-0"
                 )
               )}
-              style={isSelected && !isBooked ? { background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)` } : {}}
+              style={isSelected && !isBooked ? { background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)' } : {}}
             >
               {isSelected && !isBooked && (
                 <div className="absolute inset-0 w-full h-full bg-white opacity-10" />

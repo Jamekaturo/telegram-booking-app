@@ -12,27 +12,30 @@ export const Header: React.FC<HeaderProps> = ({ tenant }) => {
       {/* Sleek top glow line */}
       <div 
         className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] blur-[3px] opacity-60"
-        style={{ backgroundColor: tenant.colors.primary }}
+        style={{ backgroundColor: 'var(--accent-main)' }}
       />
       
       {/* Glowing Icon */}
       <div className="relative mb-5 group">
         <div 
           className="absolute inset-0 rounded-full blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-          style={{ backgroundColor: tenant.colors.primary }}
+          style={{ backgroundColor: 'var(--accent-main)' }}
         />
         <div 
-          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-white/20 backdrop-blur-xl" 
-          style={{ background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)` }}
+          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative shadow-xl border border-[var(--border-main)] backdrop-blur-xl" 
+          style={{ 
+            background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)',
+            boxShadow: 'var(--glow-shadow, 0 0 40px rgba(0,0,0,0.5))'
+          }}
         >
-          <Sparkles className="text-white w-9 h-9 sm:w-11 sm:h-11 opacity-90 drop-shadow-md" />
+          <Sparkles className="text-[var(--accent-text)] w-9 h-9 sm:w-11 sm:h-11 opacity-90 drop-shadow-md" />
         </div>
       </div>
 
-      <h1 className="text-[28px] sm:text-3xl font-extrabold text-center tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-white/90 to-zinc-500 drop-shadow-sm">
+      <h1 className="text-[28px] sm:text-3xl font-extrabold text-center tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-[var(--text-main)] to-[var(--text-muted)] drop-shadow-sm text-shadow-none">
         {tenant.name}
       </h1>
-      <p className="text-[15px] sm:text-base text-center text-zinc-400/90 mt-2 max-w-xs font-medium tracking-wide">
+      <p className="text-[15px] sm:text-base text-center text-[var(--text-secondary)] mt-2 max-w-xs font-medium tracking-wide">
         {tenant.description}
       </p>
     </header>

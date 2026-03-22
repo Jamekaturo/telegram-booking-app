@@ -53,21 +53,21 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
   );
 
   return (
-    <div className="p-5 bg-zinc-900/40 backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/5 transition-all duration-500">
+    <div className="p-5 bg-[var(--bg-card)] backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] transition-all duration-500">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-zinc-800/50 flex items-center justify-center border border-white/5">
-            <CalendarIcon className="w-4 h-4 text-zinc-300" />
+          <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
+            <CalendarIcon className="w-4 h-4 text-[var(--text-main)]" />
           </div>
-          <h2 className="text-[17px] font-bold text-zinc-100 capitalize tracking-wide">
+          <h2 className="text-[17px] font-bold text-[var(--text-main)] capitalize tracking-wide">
             {format(currentDate, 'LLLL yyyy', { locale: ru })}
           </h2>
         </div>
         <div className="flex gap-1 md:gap-2 -mr-1">
-          <button onClick={prev} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/80 active:bg-zinc-700/80 transition-colors text-zinc-400 hover:text-zinc-100 border border-transparent hover:border-white/5">
+          <button onClick={prev} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-card-hover)] active:bg-[var(--bg-card-solid)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text-main)] border border-transparent hover:border-[var(--border-hover)]">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={next} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/80 active:bg-zinc-700/80 transition-colors text-zinc-400 hover:text-zinc-100 border border-transparent hover:border-white/5">
+          <button onClick={next} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-card-hover)] active:bg-[var(--bg-card-solid)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text-main)] border border-transparent hover:border-[var(--border-hover)]">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -76,7 +76,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
       {isExpanded && (
         <div className="grid grid-cols-7 gap-1 mb-3">
           {weekDayHeaders.map((day, i) => (
-            <div key={i} className="text-center text-[10px] sm:text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div key={i} className="text-center text-[10px] sm:text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
               {day}
             </div>
           ))}
@@ -95,7 +95,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
               {isSelected && (
                 <div 
                   className="absolute inset-0 m-auto w-10 h-10 blur-[10px] rounded-full opacity-40 z-0 pointer-events-none"
-                  style={{ backgroundColor: tenant.colors.primary }}
+                  style={{ backgroundColor: 'var(--accent-main)' }}
                 />
               )}
               <button
@@ -106,17 +106,17 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                     "flex flex-col items-center justify-center rounded-2xl transition-all duration-300 w-full relative z-10",
                     isExpanded ? "aspect-square max-w-[44px] py-1" : "py-2.5 max-w-[48px]",
                     isSelected ? "shadow-lg scale-[1.08]" : "",
-                    !disabled && !isSelected ? "hover:bg-zinc-800/50 active:scale-95 text-zinc-300" : "",
+                    !disabled && !isSelected ? "hover:bg-[var(--bg-card-hover)] active:scale-95 text-[var(--text-main)]" : "",
                     disabled ? "opacity-20 cursor-not-allowed" : "",
                     !isCurrentMonth ? "opacity-0 invisible" : ""
                   )
                 )}
-                style={isSelected ? { background: `linear-gradient(135deg, ${tenant.colors.primary} 0%, ${tenant.colors.secondary} 100%)`, color: 'white' } : {}}
+                style={isSelected ? { background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)', color: 'var(--accent-text)' } : {}}
               >
                 {!isExpanded && (
                   <span className={clsx(
                       "text-[10px] sm:text-[11px] font-bold mb-1.5 uppercase tracking-widest",
-                      isSelected ? "text-white/90" : "text-zinc-500"
+                      isSelected ? "text-[var(--accent-text)] opacity-90" : "text-[var(--text-muted)]"
                     )}>
                     {format(day, 'EEEEEE', { locale: ru })}
                   </span>
@@ -124,15 +124,15 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                 <span className={clsx(
                     "text-[16px] sm:text-[17px] font-bold flex items-center justify-center rounded-full leading-none",
                     isExpanded ? "w-8 h-8" : "w-8 h-8 sm:w-10 sm:h-10",
-                    isSelected ? "text-white shadow-sm" : "text-zinc-200",
-                    available && !isSelected ? "bg-zinc-800/40 group-hover:bg-zinc-700/50 border border-white/5" : "border border-transparent"
+                    isSelected ? "text-[var(--accent-text)] shadow-sm" : "text-[var(--text-main)]",
+                    available && !isSelected ? "bg-[var(--bg-card)] group-hover:bg-[var(--bg-card-hover)] border border-[var(--border-main)]" : "border border-transparent"
                   )}>
                   {format(day, 'd')}
                 </span>
                 
                 {/* Available indicator dot */}
                 {available && !isSelected && isExpanded && (
-                  <div className="w-1 h-1 rounded-full bg-zinc-600 mt-1" />
+                  <div className="w-1 h-1 rounded-full bg-[var(--accent-main)] mt-1" />
                 )}
               </button>
             </div>
@@ -140,10 +140,10 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
         })}
       </div>
 
-      <div className="pt-3 border-t border-zinc-800/50 flex justify-center mt-2 relative z-10">
+      <div className="pt-3 border-t border-[var(--border-main)] flex justify-center mt-2 relative z-10">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-[13px] font-bold px-5 py-2.5 rounded-2xl text-zinc-400 bg-zinc-800/30 hover:bg-zinc-800/50 border border-transparent hover:border-white/5 transition-all active:scale-95 shadow-sm"
+          className="flex items-center gap-2 text-[13px] font-bold px-5 py-2.5 rounded-2xl text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-hover)] transition-all active:scale-95 shadow-sm"
         >
           {isExpanded ? (
             <>

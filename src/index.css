@@ -1,20 +1,116 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #007AFF;
-  --color-primary-dark: #0056b3;
+:root {
+  /* Default to Midnight */
+  --bg-main: #040405;
+  --bg-card: rgba(24, 24, 27, 0.4);
+  --bg-card-hover: rgba(39, 39, 42, 0.4);
+  --bg-card-solid: #18181b;
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='%230a0a0c' d='M50 25c0 15-15 25-25 25 15 0 25 15 25 25 0-15 15-25 25-25-15 0-25-15-25-25z'/%3E%3C/svg%3E");
+  --text-main: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-main: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --accent-main: #9333ea;
+  --accent-secondary: #c084fc;
+  --accent-text: #ffffff;
+  --text-shadow: none;
+  --tg-theme-bg-color: var(--bg-main);
 }
 
-:root {
-  background-color: var(--tg-theme-bg-color, #040405);
-  color: var(--tg-theme-text-color, #ffffff);
+[data-theme="midnight"] {
+  --bg-main: #040405;
+  --bg-card: rgba(24, 24, 27, 0.4);
+  --bg-card-hover: rgba(39, 39, 42, 0.4);
+  --bg-card-solid: #18181b;
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='%230a0a0c' d='M50 25c0 15-15 25-25 25 15 0 25 15 25 25 0-15 15-25 25-25-15 0-25-15-25-25z'/%3E%3C/svg%3E");
+  --text-main: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-main: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --accent-main: #9333ea;
+  --accent-secondary: #c084fc;
+  --accent-text: #ffffff;
+  --text-shadow: none;
+}
+
+[data-theme="snow"] {
+  --bg-main: #ffffff;
+  --bg-card: rgba(244, 244, 245, 0.8);
+  --bg-card-hover: rgba(228, 228, 231, 0.8);
+  --bg-card-solid: #f4f4f5;
+  --bg-pattern: none;
+  --text-main: #000000;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717a;
+  --border-main: rgba(0, 0, 0, 0.05);
+  --border-hover: rgba(0, 0, 0, 0.1);
+  --accent-main: #9333ea;
+  --accent-secondary: #c084fc;
+  --accent-text: #ffffff;
+  --text-shadow: none;
+}
+
+[data-theme="concrete"] {
+  --bg-main: #737373;
+  --bg-card: rgba(82, 82, 91, 0.5);
+  --bg-card-hover: rgba(63, 63, 70, 0.5);
+  --bg-card-solid: #52525b;
+  --bg-pattern: none;
+  --text-main: #000000;
+  --text-secondary: #18181b;
+  --text-muted: #27272a;
+  --border-main: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.2);
+  --accent-main: #27272a;
+  --accent-secondary: #3f3f46;
+  --accent-text: #ffffff;
+  --text-shadow: none;
+}
+
+[data-theme="blossom"] {
+  --bg-main: #fdfbf7;
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --bg-card-solid: #ffffff;
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath fill='%23f4ecec' d='M30 15c0 7.5-7.5 15-15 15 7.5 0 15 7.5 15 15 0-7.5 7.5-15 15-15-7.5 0-15-7.5-15-15z'/%3E%3C/svg%3E");
+  --text-main: #d4a5a5;
+  --text-secondary: #c89595;
+  --text-muted: #e8caca;
+  --border-main: rgba(212, 165, 165, 0.2);
+  --border-hover: rgba(212, 165, 165, 0.4);
+  --accent-main: #f4c2c2;
+  --accent-secondary: #fadadd;
+  --accent-text: #ffffff;
+  --text-shadow: none;
+}
+
+[data-theme="cyberpunk"] {
+  --bg-main: #000b18;
+  --bg-card: rgba(0, 20, 40, 0.6);
+  --bg-card-hover: rgba(0, 30, 60, 0.6);
+  --bg-card-solid: #001428;
+  --bg-pattern: none;
+  --text-main: #e0f2fe;
+  --text-secondary: #7dd3fc;
+  --text-muted: #0284c7;
+  --border-main: rgba(6, 182, 212, 0.3);
+  --border-hover: rgba(6, 182, 212, 0.6);
+  --accent-main: #ec4899;
+  --accent-secondary: #06b6d4;
+  --accent-text: #ffffff;
+  --text-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
 }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--tg-theme-secondary-bg-color, #040405);
-  color: var(--tg-theme-text-color, #fafafa);
+  background-color: var(--bg-main) !important;
+  background-image: var(--bg-pattern);
+  color: var(--text-main);
+  text-shadow: var(--text-shadow);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
