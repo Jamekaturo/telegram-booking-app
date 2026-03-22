@@ -51,7 +51,7 @@ export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServic
                 className="font-bold whitespace-nowrap text-[15px] sm:text-[17px]"
                 style={{ color: isSelected ? 'var(--accent-main)' : 'var(--text-main)' }}
               >
-                {service.price} ₽
+                {service.price} ₴
               </span>
             </div>
             <div className="flex items-center text-[13px] font-medium gap-1.5 relative z-10" style={{ color: isSelected ? 'var(--text-main)' : 'var(--text-secondary)' }}>

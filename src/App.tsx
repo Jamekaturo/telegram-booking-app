@@ -17,6 +17,23 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mode, setMode] = useState<'booking' | 'admin'>('booking');
   const [isBooking, setIsBooking] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('midnight');
+
+  useEffect(() => {
+    if (tenant) {
+      const themes = ['midnight', 'snow', 'concrete', 'blossom', 'cyberpunk'];
+      let hash = 0;
+      for (let i = 0; i < tenant.id.length; i++) {
+        hash = tenant.id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const themeIndex = Math.abs(hash) % themes.length;
+      
+      const savedTheme = localStorage.getItem('app_theme');
+      const finalTheme = savedTheme || themes[themeIndex];
+      document.documentElement.setAttribute('data-theme', finalTheme);
+      setCurrentTheme(finalTheme);
+    }
+  }, [tenant]);
 
   if (loading) {
     return (
@@ -38,19 +55,6 @@ function App() {
     );
   }
 
-  useEffect(() => {
-    if (tenant) {
-      const themes = ['midnight', 'snow', 'concrete', 'blossom', 'cyberpunk'];
-      let hash = 0;
-      for (let i = 0; i < tenant.id.length; i++) {
-        hash = tenant.id.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const themeIndex = Math.abs(hash) % themes.length;
-      
-      const savedTheme = localStorage.getItem('app_theme');
-      document.documentElement.setAttribute('data-theme', savedTheme || themes[themeIndex]);
-    }
-  }, [tenant]);
 
   const handleToggleService = (id: string) => {
     setSelectedServiceIds((prev) => 
@@ -167,7 +171,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden" style={{ backgroundImage: 'var(--bg-pattern)' }}>
       {/* Toggler Button */}
       {tenant && (
         <button
@@ -177,6 +181,32 @@ function App() {
           {mode === 'booking' ? <SettingsIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
         </button>
       )}
+
+      {/* Theme Tester (Temp) */}
+      <div className="absolute top-6 left-4 z-50 flex gap-1.5 p-1.5 bg-[var(--bg-card)] rounded-full border border-[var(--border-main)] shadow-lg backdrop-blur-md">
+        {[
+          { id: 'midnight', bg: '#040405', border: '#9333ea' },
+          { id: 'snow', bg: '#ffffff', border: '#9333ea' },
+          { id: 'concrete', bg: '#737373', border: '#27272a' },
+          { id: 'blossom', bg: '#fdf5f5', border: '#eda8b5' },
+          { id: 'cyberpunk', bg: '#000b18', border: '#ec4899' }
+        ].map(theme => (
+          <button
+            key={theme.id}
+            onClick={() => {
+              localStorage.setItem('app_theme', theme.id);
+              document.documentElement.setAttribute('data-theme', theme.id);
+              setCurrentTheme(theme.id);
+            }}
+            className={`w-6 h-6 rounded-full border shadow-inner transition-transform active:scale-90 ${currentTheme === theme.id ? 'scale-110 ring-2 ring-offset-1 ring-offset-[var(--bg-card)]' : 'scale-100 opacity-60 hover:opacity-100'}`}
+            style={{ 
+              backgroundColor: theme.bg, 
+              borderColor: 'rgba(150,150,150,0.3)',
+              ...(currentTheme === theme.id && { '--tw-ring-color': theme.border } as any)
+            }}
+          />
+        ))}
+      </div>
 
       <div className="relative z-10">
         <Header tenant={tenant} />
@@ -207,11 +237,16 @@ function App() {
             )}
           </main>
         ) : (
-          <main className="max-w-[480px] mx-auto">
-            <AdminPanel 
-              tenant={tenant} 
-              onUpdateTenant={(updates) => setTenant(prev => prev ? { ...prev, ...updates } : prev)}
-            />
+          <main className="max-w-[480px] mx-auto min-h-[100dvh] relative z-20">
+            {/* ФОН ДЛЯ АДМИНКИ: Всегда тёмный, чтобы избежать проблем с белым текстом на светлых темах */}
+            <div className="fixed inset-0 bg-[#040405] -z-10" />
+            
+            <div className="relative z-10 pt-16">
+              <AdminPanel 
+                tenant={tenant} 
+                onUpdateTenant={(updates) => setTenant(prev => prev ? { ...prev, ...updates } : prev)}
+              />
+            </div>
           </main>
         )}
       </div>

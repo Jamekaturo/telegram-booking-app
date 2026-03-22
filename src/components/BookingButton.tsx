@@ -11,7 +11,10 @@ interface BookingButtonProps {
 
 export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, onClick, totalPrice }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 pt-12 pb-10 sm:pb-6 z-50 pointer-events-none" style={{ background: 'linear-gradient(to top, var(--bg-main) 0%, var(--bg-main) 70%, transparent 100%)' }}>
+    <div 
+      className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-40 pointer-events-none"
+      style={{ background: 'linear-gradient(to top, var(--bg-main) 0%, var(--bg-main) 60%, transparent 100%)' }}
+    >
       <div className="max-w-[480px] mx-auto pointer-events-auto">
         <button
           disabled={disabled}
@@ -28,7 +31,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, 
           )}
           
           <span className="relative z-10 flex items-center gap-3 drop-shadow-sm">
-            {disabled ? 'Ожидание выбора...' : `Записаться на ${totalPrice} ₽`}
+            {disabled ? 'Ожидание выбора...' : `Записаться на ${totalPrice} ₴`}
             {!disabled && <CheckCircle className="w-5 h-5 text-[var(--accent-text)] opacity-90" />}
           </span>
         </button>

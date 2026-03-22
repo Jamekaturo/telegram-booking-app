@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant, Service } from '../types';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, List, Clock, Settings, UserCircle, Plus, X } from 'lucide-react';
+import { Calendar as CalendarIcon, List, Clock, Settings, UserCircle, Plus, X, Palette } from 'lucide-react';
 import { Calendar } from './Calendar';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -12,8 +12,9 @@ interface AdminPanelProps {
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }) => {
-  const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'services'>('appointments');
+  const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'services' | 'settings'>('appointments');
   const [tempDate, setTempDate] = useState<Date | null>(null);
+  const [currentTheme, setCurrentTheme] = useState(document.documentElement.getAttribute('data-theme') || 'midnight');
 
   // --- Appointments State ---
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -269,6 +270,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     { id: 'appointments', label: 'Записи', icon: <UserCircle className="w-5 h-5" /> },
     { id: 'schedule', label: 'График', icon: <CalendarIcon className="w-5 h-5" /> },
     { id: 'services', label: 'Услуги', icon: <List className="w-5 h-5" /> },
+    { id: 'settings', label: 'Дизайн', icon: <Palette className="w-5 h-5" /> },
   ];
 
   return (
@@ -476,7 +478,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                       </div>
                       <div className="flex gap-3">
                         <div className="flex-1">
-                          <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₽)</label>
+                          <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₴)</label>
                           <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" placeholder="1500" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
                         </div>
                         <div className="flex-1">
@@ -508,7 +510,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                         <p className="text-zinc-500 text-[12px] font-medium mt-1.5 flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" /> {service.durationMinutes} мин 
                           <span className="w-1 h-1 bg-zinc-700 rounded-full mx-0.5" /> 
-                          {service.price} ₽
+                          {service.price} ₴
                         </p>
                       </div>
                       <button 
@@ -529,7 +531,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                           </div>
                           <div className="flex gap-3">
                             <div className="flex-1">
-                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₽)</label>
+                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₴)</label>
                               <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
                             </div>
                             <div className="flex-1">
@@ -550,6 +552,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-4 animate-slide-up pb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-zinc-100 flex gap-2 items-center">
+                  <Palette className="w-5 h-5 text-purple-400" /> Настройка дизайна
+                </h3>
+              </div>
+              <p className="text-[13px] text-zinc-400 mb-4 leading-relaxed font-medium">
+                Выберите одну из 5 премиальных тем, которую увидят ваши клиенты при открытии приложения.
+              </p>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { id: 'midnight', name: 'Midnight (Тёмная листва)', accent: '#9333ea', bg: '#040405' },
+                  { id: 'snow', name: 'Snow (Светлая чистая)', accent: '#9333ea', bg: '#ffffff' },
+                  { id: 'concrete', name: 'Concrete (Серая матовая)', accent: '#27272a', bg: '#737373' },
+                  { id: 'blossom', name: 'Blossom (Кремовая)', accent: '#f4c2c2', bg: '#fdfbf7' },
+                  { id: 'cyberpunk', name: 'Cyberpunk (Неоновая)', accent: '#ec4899', bg: '#000b18' }
+                ].map(theme => {
+                   const isActive = currentTheme === theme.id;
+                   return (
+                     <button
+                       key={theme.id}
+                       onClick={() => {
+                         localStorage.setItem('app_theme', theme.id);
+                         document.documentElement.setAttribute('data-theme', theme.id);
+                         setCurrentTheme(theme.id);
+                       }}
+                       className={`p-4 rounded-[1.25rem] border text-left flex justify-between items-center transition-all duration-300 active:scale-95 ${
+                         isActive 
+                           ? 'bg-[var(--bg-card)] border-[var(--accent-main)] shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-[var(--accent-main)]' 
+                           : 'bg-zinc-900/50 border-white/5 hover:border-white/20 hover:bg-zinc-800'
+                       }`}
+                     >
+                       <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full border border-white/10 shadow-inner flex items-center justify-center overflow-hidden relative" style={{ backgroundColor: theme.bg }}>
+                           {/* Decorative accent sliver */}
+                           <div className="absolute right-0 bottom-0 top-0 w-3" style={{ background: theme.accent }} />
+                         </div>
+                         <span className={`text-[15px] font-bold ${isActive ? 'text-[var(--text-main)] drop-shadow-sm' : 'text-zinc-300'}`}>
+                           {theme.name}
+                         </span>
+                       </div>
+                       {isActive && <div className="w-3 h-3 rounded-full bg-[var(--accent-main)] shadow-[0_0_12px_var(--accent-main)] animate-pulse" />}
+                     </button>
+                   );
+                })}
               </div>
             </div>
           )}

@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({ tenant }) => {
         </div>
       </div>
 
-      <h1 className="text-[28px] sm:text-3xl font-extrabold text-center tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-[var(--text-main)] to-[var(--text-muted)] drop-shadow-sm text-shadow-none">
+      <h1 className="text-[28px] sm:text-3xl font-extrabold text-center tracking-tight text-[var(--text-main)] drop-shadow-sm">
         {tenant.name}
       </h1>
       <p className="text-[15px] sm:text-base text-center text-[var(--text-secondary)] mt-2 max-w-xs font-medium tracking-wide">
