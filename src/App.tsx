@@ -171,8 +171,10 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden" style={{ backgroundImage: 'var(--bg-pattern)' }}>
-      {/* Toggler Button */}
+    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden">
+      {/* 🚀 GPU-Accelerated Fixed Background pattern (prevents repaint on scroll) */}
+      <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'var(--bg-pattern)' }} />
+      
       {tenant && (
         <button
           onClick={() => setMode(mode === 'booking' ? 'admin' : 'booking')}
