@@ -19,7 +19,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, 
         <button
           disabled={disabled}
           onClick={onClick}
-          className="w-full relative overflow-hidden flex items-center justify-center gap-3 py-4 sm:py-4.5 rounded-[2rem] text-[17px] font-bold transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] shadow-[var(--glow-shadow,0_10px_40px_rgba(0,0,0,0.6))] disabled:shadow-none border border-[var(--border-main)]"
+          className="w-full relative overflow-hidden flex items-center justify-center gap-3 py-4 sm:py-4.5 rounded-[2rem] text-[17px] font-bold transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] border border-[var(--border-main)]"
           style={{
             background: disabled ? 'var(--bg-card-solid)' : 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)',
             color: disabled ? 'var(--text-muted)' : 'var(--accent-text)',
@@ -30,7 +30,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, 
             <div className="absolute top-0 bottom-0 left-[-100%] w-[50%] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] animate-shimmer" />
           )}
           
-          <span className="relative z-10 flex items-center gap-3 drop-shadow-sm">
+          <span className="relative z-10 flex items-center gap-3">
             {disabled ? 'Ожидание выбора...' : `Записаться на ${totalPrice} ₴`}
             {!disabled && <CheckCircle className="w-5 h-5 text-[var(--accent-text)] opacity-90" />}
           </span>

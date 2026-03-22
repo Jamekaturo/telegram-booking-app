@@ -23,6 +23,10 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
   const slots = tenant.timeSlots[dateStr] || [];
+  
+  const now = new Date();
+  const isToday = dateStr === format(now, 'yyyy-MM-dd');
+  const currentFormatTime = format(now, 'HH:mm');
 
   if (slots.length === 0) {
     return (
@@ -33,7 +37,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
   }
 
   return (
-    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] mt-4 transition-colors duration-300">
+    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 border border-[var(--border-main)] mt-4">
       <div className="flex items-center gap-2 mb-5">
         <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
           <Clock className="w-4 h-4 text-[var(--text-main)]" />
@@ -44,28 +48,30 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
         {slots.map((slot) => {
           const isSelected = selectedSlot === slot;
           const isBooked = tenant.bookedSlots?.[dateStr]?.includes(slot);
+          const isPastTime = isToday && slot < currentFormatTime;
+          const isDisabled = isBooked || isPastTime;
 
           return (
             <button
               key={slot}
-              onClick={() => !isBooked && onSelectSlot(slot)}
-              disabled={isBooked}
+              onClick={() => !isDisabled && onSelectSlot(slot)}
+              disabled={isDisabled}
               className={twMerge(
                 clsx(
-                  "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-colors duration-300 border relative overflow-hidden",
-                  isBooked 
+                  "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide border relative overflow-hidden active:scale-95",
+                  isDisabled 
                     ? "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-main)] opacity-50 cursor-not-allowed"
                     : isSelected
-                      ? "text-[var(--accent-text)] shadow-[var(--glow-shadow,0_0_20px_rgba(0,0,0,0.15))] border-transparent scale-[1.03] z-10"
+                      ? "text-[var(--accent-text)] border-transparent scale-[1.03] z-10"
                       : "bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-main)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-hover)] active:scale-95 z-0"
                 )
               )}
-              style={isSelected && !isBooked ? { background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)' } : {}}
+              style={isSelected && !isDisabled ? { background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)' } : {}}
             >
-              {isSelected && !isBooked && (
+              {isSelected && !isDisabled && (
                 <div className="absolute inset-0 w-full h-full bg-white opacity-10" />
               )}
-              <span className="relative z-10 drop-shadow-sm">{slot}</span>
+              <span className="relative z-10">{slot}</span>
             </button>
           );
         })}
