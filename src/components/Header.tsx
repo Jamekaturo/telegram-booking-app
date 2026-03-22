@@ -11,8 +11,8 @@ export const Header: React.FC<HeaderProps> = ({ tenant }) => {
     <header className="px-6 pt-10 pb-8 flex flex-col items-center justify-center relative z-10 transition-all">
       {/* Sleek top glow line */}
       <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] blur-[3px] opacity-60"
-        style={{ backgroundColor: 'var(--accent-main)' }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] opacity-60"
+        style={{ backgroundColor: 'var(--accent-main)', boxShadow: '0 0 10px 2px var(--accent-main)' }}
       />
       
       {/* Glowing Icon */}

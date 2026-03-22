@@ -107,8 +107,6 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--bg-main) !important;
-  background-image: var(--bg-pattern);
   color: var(--text-main);
   text-shadow: var(--text-shadow);
   -webkit-font-smoothing: antialiased;

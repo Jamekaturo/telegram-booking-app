@@ -171,10 +171,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-main)] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden">
+    <>
       {/* 🚀 GPU-Accelerated Fixed Background pattern (prevents repaint on scroll) */}
-      <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'var(--bg-pattern)' }} />
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[var(--bg-main)]" style={{ backgroundImage: 'var(--bg-pattern)' }} />
       
+      <div className="min-h-[100dvh] pb-[140px] font-sans text-[var(--text-main)] relative overflow-x-hidden w-full">
       {tenant && (
         <button
           onClick={() => setMode(mode === 'booking' ? 'admin' : 'booking')}
@@ -185,7 +186,7 @@ function App() {
       )}
 
       {/* Theme Tester (Temp) */}
-      <div className="absolute top-6 left-4 z-50 flex gap-1.5 p-1.5 bg-[var(--bg-card)] rounded-full border border-[var(--border-main)] shadow-lg backdrop-blur-md">
+      <div className="absolute top-6 left-4 z-50 flex gap-1.5 p-1.5 bg-[var(--bg-card)] rounded-full border border-[var(--border-main)] shadow-lg hover:shadow-xl transition-shadow bg-opacity-95">
         {[
           { id: 'midnight', bg: '#040405', border: '#9333ea' },
           { id: 'snow', bg: '#ffffff', border: '#9333ea' },
@@ -261,7 +262,8 @@ function App() {
           totalPrice={totalPrice}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

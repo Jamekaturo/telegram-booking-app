@@ -53,7 +53,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
   );
 
   return (
-    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] transition-all duration-500">
+    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] transition-colors duration-500">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
@@ -103,7 +103,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                 onClick={() => !disabled && onSelectDate(day)}
                 className={twMerge(
                   clsx(
-                    "flex flex-col items-center justify-center rounded-2xl transition-all duration-300 w-full relative z-10",
+                    "flex flex-col items-center justify-center rounded-2xl transition-colors duration-300 w-full relative z-10",
                     isExpanded ? "aspect-square max-w-[44px] py-1" : "py-2.5 max-w-[48px]",
                     isSelected ? "shadow-lg scale-[1.08]" : "",
                     !disabled && !isSelected ? "hover:bg-[var(--bg-card-hover)] active:scale-95 text-[var(--text-main)]" : "",
@@ -143,7 +143,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
       <div className="pt-3 border-t border-[var(--border-main)] flex justify-center mt-2 relative z-10">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-[13px] font-bold px-5 py-2.5 rounded-2xl text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-hover)] transition-all active:scale-95 shadow-sm"
+          className="flex items-center gap-2 text-[13px] font-bold px-5 py-2.5 rounded-2xl text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-hover)] transition-colors active:scale-95 shadow-sm"
         >
           {isExpanded ? (
             <>

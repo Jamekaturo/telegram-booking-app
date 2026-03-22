@@ -19,7 +19,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, 
         <button
           disabled={disabled}
           onClick={onClick}
-          className="w-full relative overflow-hidden flex items-center justify-center gap-3 py-4 sm:py-4.5 rounded-[2rem] text-[17px] font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] shadow-[var(--glow-shadow,0_10px_40px_rgba(0,0,0,0.6))] disabled:shadow-none border border-[var(--border-main)]"
+          className="w-full relative overflow-hidden flex items-center justify-center gap-3 py-4 sm:py-4.5 rounded-[2rem] text-[17px] font-bold transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] shadow-[var(--glow-shadow,0_10px_40px_rgba(0,0,0,0.6))] disabled:shadow-none border border-[var(--border-main)]"
           style={{
             background: disabled ? 'var(--bg-card-solid)' : 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)',
             color: disabled ? 'var(--text-muted)' : 'var(--accent-text)',

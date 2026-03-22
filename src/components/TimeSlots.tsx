@@ -33,7 +33,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
   }
 
   return (
-    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] mt-4 transition-all duration-300">
+    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] mt-4 transition-colors duration-300">
       <div className="flex items-center gap-2 mb-5">
         <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
           <Clock className="w-4 h-4 text-[var(--text-main)]" />
@@ -52,7 +52,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
               disabled={isBooked}
               className={twMerge(
                 clsx(
-                  "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-all duration-300 border relative overflow-hidden",
+                  "py-3.5 rounded-2xl text-[15px] font-bold tracking-wide transition-colors duration-300 border relative overflow-hidden",
                   isBooked 
                     ? "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-main)] opacity-50 cursor-not-allowed"
                     : isSelected
