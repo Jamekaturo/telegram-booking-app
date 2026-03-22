@@ -25,7 +25,7 @@ export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServic
             onClick={() => onToggleService(service.id)}
             className={twMerge(
               clsx(
-                "w-full text-left p-4 sm:p-5 rounded-3xl flex flex-col gap-2 transition-all duration-300 border backdrop-blur-md relative overflow-hidden group",
+                "w-full text-left p-4 sm:p-5 rounded-3xl flex flex-col gap-2 transition-transform duration-300 border relative overflow-hidden group",
                 isSelected 
                   ? "shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-transparent"
                   : "bg-[var(--bg-card)] border-[var(--border-main)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card-hover)]"
@@ -39,12 +39,7 @@ export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServic
               } : undefined
             }
           >
-            {isSelected && (
-              <div 
-                className="absolute top-[-50%] right-[-10%] w-32 h-32 blur-[40px] rounded-full opacity-30 pointer-events-none"
-                style={{ backgroundColor: 'var(--accent-main)' }}
-              />
-            )}
+
             <div className="flex justify-between items-start w-full gap-2 relative z-10">
               <span className="font-semibold text-[var(--text-main)] leading-tight flex-1 text-[15px] sm:text-[17px]">{service.name}</span>
               <span 

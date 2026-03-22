@@ -18,11 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ tenant }) => {
       {/* Glowing Icon */}
       <div className="relative mb-5 group">
         <div 
-          className="absolute inset-0 rounded-full blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-          style={{ backgroundColor: 'var(--accent-main)' }}
-        />
-        <div 
-          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative shadow-xl border border-[var(--border-main)] backdrop-blur-xl" 
+          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center relative shadow-[0_0_20px_var(--accent-main)] border border-[var(--border-main)]" 
           style={{ 
             background: 'linear-gradient(135deg, var(--accent-main) 0%, var(--accent-secondary) 100%)',
             boxShadow: 'var(--glow-shadow, 0 0 40px rgba(0,0,0,0.5))'

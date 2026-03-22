@@ -53,7 +53,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
   );
 
   return (
-    <div className="p-5 bg-[var(--bg-card)] backdrop-blur-xl rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] transition-all duration-500">
+    <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--border-main)] transition-all duration-500">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
@@ -94,7 +94,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
             <div key={i} className="flex justify-center items-center relative">
               {isSelected && (
                 <div 
-                  className="absolute inset-0 m-auto w-10 h-10 blur-[10px] rounded-full opacity-40 z-0 pointer-events-none"
+                  className="absolute inset-0 m-auto w-10 h-10 rounded-full opacity-40 z-0 pointer-events-none"
                   style={{ backgroundColor: 'var(--accent-main)' }}
                 />
               )}
