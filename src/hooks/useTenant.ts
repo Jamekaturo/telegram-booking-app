@@ -14,7 +14,7 @@ export const useTenant = () => {
       setLoading(true);
       try {
         const [ { data: servicesData, error: servicesError }, { data: availabilityData, error: availabilityError }, { data: appointmentsData, error: appointmentsError } ] = await Promise.all([
-           supabase.from('services').select('*').order('created_at', { ascending: true }),
+           supabase.from('services').select('*'),
            supabase.from('availability').select('*'),
            supabase.from('appointments').select('appointment_date, start_time, status, created_at')
         ]);
@@ -22,12 +22,21 @@ export const useTenant = () => {
         if (servicesError) throw servicesError;
         if (availabilityError) throw availabilityError;
 
-        const services = (servicesData || []).map(s => ({
-          id: s.id,
-          name: s.name,
-          price: Number(s.price),
-          durationMinutes: s.duration_minutes
-        }));
+        const services = (servicesData || [])
+          .sort((a, b) => {
+             // Fallback to order_index, or fallback to created_at
+             const orderA = a.order_index ?? 999;
+             const orderB = b.order_index ?? 999;
+             if (orderA !== orderB) return orderA - orderB;
+             // Secondary sort by date
+             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          })
+          .map(s => ({
+            id: s.id,
+            name: s.name,
+            price: Number(s.price),
+            durationMinutes: s.duration_minutes
+          }));
 
         const availableDates: string[] = [];
         const timeSlots: Record<string, string[]> = {};

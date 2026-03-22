@@ -212,7 +212,7 @@ function App() {
       </div>
 
       <div className="relative z-10">
-        <Header tenant={tenant} />
+        {mode === 'booking' && <Header tenant={tenant} />}
         
         {mode === 'booking' ? (
           <main className="max-w-[480px] mx-auto fade-in pb-8">
@@ -244,7 +244,7 @@ function App() {
             {/* ФОН ДЛЯ АДМИНКИ: Всегда тёмный, чтобы избежать проблем с белым текстом на светлых темах */}
             <div className="fixed inset-0 bg-[#040405] -z-10" />
             
-            <div className="relative z-10 pt-16">
+            <div className="relative z-10 pt-12 pb-10">
               <AdminPanel 
                 tenant={tenant} 
                 onUpdateTenant={(updates) => setTenant(prev => prev ? { ...prev, ...updates } : prev)}

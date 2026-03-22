@@ -1,10 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant, Service } from '../types';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, List, Clock, Settings, UserCircle, Plus, X, Palette } from 'lucide-react';
+import { Calendar as CalendarIcon, List, Clock, Settings, UserCircle, Plus, Palette, GripVertical } from 'lucide-react';
 import { Calendar } from './Calendar';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+
+// DND Kit
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const SortableServiceItem = ({ service, startEditingService, editingServiceId, isActive }: any) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: service.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className={`bg-zinc-800/40 rounded-2xl border border-white/5 overflow-hidden flex transition-colors ${isActive ? 'ring-2 ring-purple-500 z-50 bg-zinc-800/80 shadow-2xl' : ''}`}>
+      <div {...attributes} {...listeners} className="p-4 pr-2 flex items-center justify-center cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 touch-none">
+        <GripVertical className="w-5 h-5" />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <div className="py-4 pr-4 flex justify-between items-center group hover:bg-zinc-800/60 transition-colors">
+          <div className="flex-1">
+            <h4 className="font-medium text-zinc-200 text-[14px] group-hover:text-purple-300 transition-colors pr-2">
+              {service.name}
+            </h4>
+            <p className="text-zinc-500 text-[12px] font-medium mt-1.5 flex items-center gap-1.5">
+               <Clock className="w-3.5 h-3.5" /> {service.durationMinutes} мин 
+               <span className="w-1 h-1 bg-zinc-700 rounded-full mx-0.5" /> 
+               {service.price} ₴
+            </p>
+          </div>
+          <button 
+             onPointerDown={(e) => e.stopPropagation()}
+             onClick={() => startEditingService(service)} 
+             className={`p-2.5 rounded-xl border transition-all active:scale-95 shadow-sm ${editingServiceId === service.id ? 'bg-zinc-700 border-white/10 text-white' : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-white hover:border-white/10'}`}
+          >
+             <Settings className={`w-4 h-4 transition-transform ${editingServiceId === service.id ? 'rotate-90' : ''}`} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface AdminPanelProps {
   tenant: Tenant;
@@ -273,6 +312,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     { id: 'settings', label: 'Дизайн', icon: <Palette className="w-5 h-5" /> },
   ];
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = tenant.services.findIndex(s => s.id === active.id);
+    const newIndex = tenant.services.findIndex(s => s.id === over.id);
+
+    const newServices = arrayMove(tenant.services, oldIndex, newIndex);
+    onUpdateTenant({ services: newServices });
+
+    try {
+      await supabase.from('services').upsert(
+        newServices.map((s, idx) => ({ 
+          id: s.id, 
+          name: s.name, 
+          price: s.price, 
+          duration_minutes: s.durationMinutes,
+          order_index: idx
+        })), { onConflict: 'id' }
+      );
+    } catch (e) {
+      console.warn('Backend sorting not natively supported unless order_index column exists.', e);
+    }
+  };
+
   return (
     <div className="animate-fade-in fade-in pb-24 px-4 sm:px-6">
       <div className="flex flex-col space-y-6 mt-4">
@@ -500,58 +569,50 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
 
                 {tenant.services.length === 0 && !isAddingService && <p className="text-zinc-500 text-sm text-center py-4 text-full">Нет добавленных услуг</p>}
                 
-                {tenant.services.map((service) => (
-                  <div key={service.id} className="bg-zinc-800/40 rounded-2xl border border-white/5 overflow-hidden transition-colors">
-                    <div className="p-4 flex justify-between items-center group hover:bg-zinc-800/60 transition-colors">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-zinc-200 text-[14px] group-hover:text-purple-300 transition-colors pr-2">
-                          {service.name}
-                        </h4>
-                        <p className="text-zinc-500 text-[12px] font-medium mt-1.5 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" /> {service.durationMinutes} мин 
-                          <span className="w-1 h-1 bg-zinc-700 rounded-full mx-0.5" /> 
-                          {service.price} ₴
-                        </p>
-                      </div>
-                      <button 
-                        onClick={() => startEditingService(service)} 
-                        className={`p-2.5 rounded-xl border transition-all active:scale-95 shadow-sm ${editingServiceId === service.id ? 'bg-zinc-700 border-white/10 text-white' : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-white hover:border-white/10'}`}
-                      >
-                        <Settings className={`w-4 h-4 transition-transform ${editingServiceId === service.id ? 'rotate-90' : ''}`} />
-                      </button>
-                    </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={tenant.services.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                    {tenant.services.map((service) => (
+                      <div key={service.id} className="relative">
+                        <SortableServiceItem 
+                          service={service} 
+                          startEditingService={startEditingService}
+                          editingServiceId={editingServiceId}
+                          isActive={editingServiceId === service.id}
+                        />
 
-                    {/* Expandable Edit Menu */}
-                    {editingServiceId === service.id && (
-                      <div className="px-4 pb-4 pt-2 border-t border-white/5 bg-zinc-900/30 animate-fade-in">
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Название услуги</label>
-                            <input value={editingServiceForm.name} onChange={e => setEditingServiceForm(p => ({...p, name: e.target.value}))} type="text" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
-                          </div>
-                          <div className="flex gap-3">
-                            <div className="flex-1">
-                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₴)</label>
-                              <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                        {/* Expandable Edit Menu */}
+                        {editingServiceId === service.id && (
+                          <div className="bg-zinc-800/40 rounded-b-2xl border border-white/5 border-t-0 px-4 pb-4 pt-4 mt-[-8px] animate-fade-in z-10 relative">
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Название услуги</label>
+                                <input value={editingServiceForm.name} onChange={e => setEditingServiceForm(p => ({...p, name: e.target.value}))} type="text" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                              </div>
+                              <div className="flex gap-3">
+                                <div className="flex-1">
+                                  <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Стоимость (₴)</label>
+                                  <input value={editingServiceForm.price} onChange={e => setEditingServiceForm(p => ({...p, price: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Время (мин)</label>
+                                  <input value={editingServiceForm.durationMinutes} onChange={e => setEditingServiceForm(p => ({...p, durationMinutes: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-4 pt-2">
+                                <button onClick={handleSaveService} disabled={isSavingService} className="flex-1 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[13px] font-bold hover:bg-purple-500/30 transition-colors shadow-sm disabled:opacity-50">
+                                  {isSavingService ? 'Сохранение...' : 'Сохранить'}
+                                </button>
+                                <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-[13px] font-bold hover:bg-red-500/20 transition-colors shadow-sm">
+                                  Удалить
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <label className="text-[12px] text-zinc-500 mb-1 block ml-1">Время (мин)</label>
-                              <input value={editingServiceForm.durationMinutes} onChange={e => setEditingServiceForm(p => ({...p, durationMinutes: e.target.value}))} type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-purple-500/50 transition-colors" />
-                            </div>
                           </div>
-                          <div className="flex gap-2 mt-4 pt-2">
-                            <button onClick={handleSaveService} disabled={isSavingService} className="flex-1 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[13px] font-bold hover:bg-purple-500/30 transition-colors shadow-sm disabled:opacity-50">
-                              {isSavingService ? 'Сохранение...' : 'Сохранить'}
-                            </button>
-                            <button onClick={() => handleDeleteService(service.id)} className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-[13px] font-bold hover:bg-red-500/20 transition-colors shadow-sm">
-                              Удалить
-                            </button>
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           )}
