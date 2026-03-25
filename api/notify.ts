@@ -75,13 +75,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send confirmation to client
     if (telegramId) {
       try {
-        const clientMsg = `✅ *Ваша запись успешно создана!*\n\n` +
-          `💅 *Услуги:* ${serviceName}\n` +
-          `📅 *Дата:* ${date}\n` +
-          `⏰ *Время:* ${time}${priceText}\n\n` +
+        const clientMsg = `✅ <b>Ваша запись успешно создана!</b>\n\n` +
+          `💅 <b>Услуги:</b> ${safeService}\n` +
+          `📅 <b>Дата:</b> ${date}\n` +
+          `⏰ <b>Время:</b> ${time}${priceText ? escapeHtml(priceText) : ''}\n\n` +
           `Мы свяжемся с вами в случае необходимости, либо просто ждем вас в назначенное время!`;
-        // Use Markdown if name contains no special chars, or just send without formatting if safe
-        await bot.telegram.sendMessage(telegramId, clientMsg, { parse_mode: 'Markdown' });
+        await bot.telegram.sendMessage(telegramId, clientMsg, { parse_mode: 'HTML' });
       } catch (err) {
         console.error('Failed to notify client via DM', err);
       }

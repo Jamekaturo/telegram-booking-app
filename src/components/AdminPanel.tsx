@@ -54,7 +54,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
   const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'services' | 'settings'>('appointments');
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [currentTheme, setCurrentTheme] = useState(document.documentElement.getAttribute('data-theme') || 'midnight');
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
 
   // --- Appointments State ---
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -377,51 +376,52 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
           
           {activeTab === 'appointments' && (
             <div className="space-y-4 animate-slide-up">
-              <div className="bg-zinc-950/80 p-2 sm:p-4 rounded-3xl border border-white/5 shadow-inner mb-6">
-                <Calendar 
-                  tenant={{...tenant, availableDates: localAvailable} as Tenant} 
-                  selectedDate={filterDate} 
-                  onSelectDate={(d) => setFilterDate(prev => prev && prev.getTime() === d.getTime() ? null : d)} 
-                  isAdmin 
-                  appointments={appointments} 
-                />
-              </div>
-
-              <div className="flex items-center justify-between mb-2 px-2">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-400" /> 
-                  {filterDate ? format(filterDate, 'd MMMM', { locale: ru }) : 'Все записи'}
+                  <Clock className="w-5 h-5 text-purple-400" /> Все записи
                 </h3>
-                {filterDate && (
-                  <button onClick={() => setFilterDate(null)} className="text-xs text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full hover:bg-purple-500/20 active:scale-95 transition-all">
-                    Показать все
-                  </button>
-                )}
               </div>
+              
               {loadingAppts ? (
                 <p className="text-zinc-500 text-sm py-4 text-center w-full">Загрузка записей...</p>
+              ) : appointments.length === 0 ? (
+                <p className="text-zinc-500 text-sm py-4 text-center w-full">Нет записей</p>
               ) : (
                 (() => {
-                  let filteredAppointments = appointments;
-                  if (filterDate) {
-                    const dStr = format(filterDate, 'yyyy-MM-dd');
-                    filteredAppointments = appointments.filter(a => a.appointment_date === dStr);
-                  }
-
-                  if (filteredAppointments.length === 0) {
-                    return <p className="text-zinc-500 text-sm py-4 text-center w-full">Нет записей {filterDate ? 'на этот день' : ''}</p>;
-                  }
-
-                  const groupedMap = new Map<any, any[]>();
-                  filteredAppointments.forEach(appt => {
+                  // Первая группировка: склеиваем услуги одного заказа вместе
+                  const ordersMap = new Map<any, any[]>();
+                  appointments.forEach(appt => {
                     const groupId = appt.client_comment?.startsWith('order_') ? appt.client_comment : appt.id;
-                    if (!groupedMap.has(groupId)) {
-                      groupedMap.set(groupId, []);
+                    if (!ordersMap.has(groupId)) {
+                      ordersMap.set(groupId, []);
                     }
-                    groupedMap.get(groupId)!.push(appt);
+                    ordersMap.get(groupId)!.push(appt);
                   });
-                  return Array.from(groupedMap.values()).map(group => {
-                    const mainAppt = group[0];
+                  
+                  // Вторая группировка: по датам
+                  const datesMap = new Map<string, any[][]>();
+                  Array.from(ordersMap.values()).forEach(group => {
+                    const dateStr = group[0].appointment_date;
+                    if (!datesMap.has(dateStr)) datesMap.set(dateStr, []);
+                    datesMap.get(dateStr)!.push(group);
+                  });
+
+                  // Сортировка дат
+                  const sortedDates = Array.from(datesMap.keys()).sort();
+
+                  return sortedDates.map(dateStr => {
+                    const groupsForDate = datesMap.get(dateStr)!;
+                    const displayDate = format(new Date(dateStr), 'dd.MM', { locale: ru });
+                    
+                    return (
+                      <div key={dateStr} className="mb-6 last:mb-0 animate-fade-in">
+                        <h4 className="text-[17px] font-bold text-zinc-200 border-b border-white/10 pb-1.5 mb-3 flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4 text-purple-400" />
+                          {displayDate}
+                        </h4>
+                        <div className="space-y-3 pl-1">
+                          {groupsForDate.map(group => {
+                            const mainAppt = group[0];
                     const clientName = mainAppt.clients ? `${mainAppt.clients.first_name || ''} ${mainAppt.clients.last_name || ''}`.trim() || 'Без имени' : 'Без имени';
                     const handle = mainAppt.clients?.username ? `@${mainAppt.clients.username}` : '';
                     
@@ -484,11 +484,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                         )}
                       </div>
                     );
-                  });
-                })()
-              )}
-            </div>
-          )}
+                  })}
+                  </div>
+                </div>
+              );
+            });
+          })()
+        )}
+      </div>
+    )}
 
           {activeTab === 'schedule' && (
             <div className="space-y-4 animate-slide-up pb-4">
