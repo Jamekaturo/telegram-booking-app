@@ -65,12 +65,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const message = `🔔 *Новая запись!*\n\n` +
       `👤 *Клиент:* ${nameMention}${handleText}\n` +
-      `💅 *Услуга:* ${serviceName}\n` +
+      `💅 *Услуги:* ${serviceName}\n` +
       `📅 *Дата:* ${date}\n` +
       `⏰ *Время:* ${time}${priceText}\n\n` +
       `Зайдите в Админ-панель (кнопка ⚙️) внутри вашего бота, чтобы подтвердить!`;
 
     await bot.telegram.sendMessage(targetChatId, message, { parse_mode: 'Markdown' });
+
+    // Send confirmation to client
+    if (telegramId) {
+      try {
+        const clientMsg = `✅ *Ваша запись успешно создана!*\n\n` +
+          `💅 *Услуги:* ${serviceName}\n` +
+          `📅 *Дата:* ${date}\n` +
+          `⏰ *Время:* ${time}${priceText}\n\n` +
+          `Мы свяжемся с вами в случае необходимости, либо просто ждем вас в назначенное время!`;
+        // Use Markdown if name contains no special chars, or just send without formatting if safe
+        await bot.telegram.sendMessage(telegramId, clientMsg, { parse_mode: 'Markdown' });
+      } catch (err) {
+        console.error('Failed to notify client via DM', err);
+      }
+    }
 
     return res.status(200).json({ success: true });
   } catch (err: any) {

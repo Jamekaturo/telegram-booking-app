@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  /* Default to Midnight */
   --bg-main: #040405;
   --bg-card: rgba(24, 24, 27, 0.4);
   --bg-card-hover: rgba(39, 39, 42, 0.4);
@@ -53,22 +52,7 @@
   --text-shadow: none;
 }
 
-[data-theme="concrete"] {
-  --bg-main: #737373;
-  --bg-card: rgba(82, 82, 91, 0.5);
-  --bg-card-hover: rgba(63, 63, 70, 0.5);
-  --bg-card-solid: #52525b;
-  --bg-pattern: none;
-  --text-main: #000000;
-  --text-secondary: #18181b;
-  --text-muted: #27272a;
-  --border-main: rgba(0, 0, 0, 0.1);
-  --border-hover: rgba(0, 0, 0, 0.2);
-  --accent-main: #27272a;
-  --accent-secondary: #3f3f46;
-  --accent-text: #ffffff;
-  --text-shadow: none;
-}
+
 
 [data-theme="blossom"] {
   --bg-main: #fdf5f5;
@@ -113,7 +97,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base Animations */
 .fade-in {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -123,7 +106,6 @@ body {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Premium micro-animations */
 .animate-blob {
   animation: blob 15s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -185,7 +167,6 @@ body {
   }
 }
 
-/* Mobile WebKit adjustments */
 input,
 textarea,
 button,

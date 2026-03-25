@@ -10,9 +10,10 @@ interface TimeSlotsProps {
   selectedDate: Date | null;
   selectedSlot: string | null;
   onSelectSlot: (slot: string) => void;
+  selectedTotalDuration?: number;
 }
 
-export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, selectedSlot, onSelectSlot }) => {
+export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, selectedSlot, onSelectSlot, selectedTotalDuration = 60 }) => {
   if (!selectedDate) {
     return (
       <div className="p-4 text-center text-[var(--text-secondary)] text-sm italic mt-2">
@@ -22,19 +23,15 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
   }
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
-  const slots = tenant.timeSlots[dateStr] || [];
+  const availableSlotsSet = new Set(tenant.timeSlots[dateStr] || []);
+  
+  // Всегда показываем с 10 до 17, даже если день пустой или окна недоступны
+  const defaultSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+  const slotsToRender = Array.from(new Set([...defaultSlots, ...availableSlotsSet])).sort();
   
   const now = new Date();
   const isToday = dateStr === format(now, 'yyyy-MM-dd');
   const currentFormatTime = format(now, 'HH:mm');
-
-  if (slots.length === 0) {
-    return (
-      <div className="p-4 text-center text-[var(--text-secondary)] text-sm bg-[var(--bg-card)] rounded-2xl mx-4 mt-4 border border-[var(--border-main)]">
-        Нет свободного времени на эту дату
-      </div>
-    );
-  }
 
   return (
     <div className="p-5 bg-[var(--bg-card)] rounded-[2rem] mx-4 border border-[var(--border-main)] mt-4">
@@ -45,11 +42,30 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
         <h3 className="text-[17px] font-bold text-[var(--text-main)] tracking-wide">Доступное время</h3>
       </div>
       <div className="grid grid-cols-4 gap-2.5">
-        {slots.map((slot) => {
+        {slotsToRender.map((slot) => {
           const isSelected = selectedSlot === slot;
-          const isBooked = tenant.bookedSlots?.[dateStr]?.includes(slot);
-          const isPastTime = isToday && slot < currentFormatTime;
-          const isDisabled = isBooked || isPastTime;
+          
+          const timeToMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+          
+          let isDisabled = false;
+          let currentMins = timeToMins(slot);
+          const endMins = currentMins + selectedTotalDuration;
+          
+          while (currentMins < endMins) {
+             const hStr = Math.floor(currentMins / 60).toString().padStart(2, '0');
+             const mStr = (currentMins % 60).toString().padStart(2, '0');
+             const checkSlot = `${hStr}:${mStr}`;
+             
+             const b = tenant.bookedSlots?.[dateStr]?.includes(checkSlot);
+             const past = isToday && checkSlot < currentFormatTime;
+             const unavail = !availableSlotsSet.has(checkSlot);
+             
+             if (b || past || unavail) {
+                isDisabled = true;
+                break;
+             }
+             currentMins += 60; // assume 60 min intervals
+          }
 
           return (
             <button

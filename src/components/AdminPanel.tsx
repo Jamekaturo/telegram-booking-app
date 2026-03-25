@@ -54,6 +54,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
   const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'services' | 'settings'>('appointments');
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [currentTheme, setCurrentTheme] = useState(document.documentElement.getAttribute('data-theme') || 'midnight');
+  const [filterDate, setFilterDate] = useState<Date | null>(null);
 
   // --- Appointments State ---
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -91,30 +92,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
     }
   }, [activeTab]);
 
-  const handleConfirmAppt = async (id: string, dateStr: string, timeStr: string) => {
+  const handleConfirmApptGroup = async (ids: string[], dateStr: string, timeSlots: string[]) => {
     try {
-      const { error } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id);
+      const { error } = await supabase.from('appointments').update({ status: 'confirmed' }).in('id', ids);
       if (error) throw error;
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' } : a));
+      setAppointments(prev => prev.map(a => ids.includes(a.id) ? { ...a, status: 'confirmed' } : a));
       
       const newBooked = { ...(tenant.bookedSlots || {}) };
       if (!newBooked[dateStr]) newBooked[dateStr] = [];
-      const slot = timeStr.substring(0, 5);
-      if (!newBooked[dateStr].includes(slot)) {
-        newBooked[dateStr].push(slot);
-      }
+      timeSlots.forEach(slot => {
+        if (!newBooked[dateStr].includes(slot)) {
+          newBooked[dateStr].push(slot);
+        }
+      });
       onUpdateTenant({ bookedSlots: newBooked });
     } catch (err: any) {
       alert('Ошибка при подтверждении: ' + err.message);
     }
   };
 
-  const handleCancelAppt = async (id: string) => {
-    if (confirm('Отменить запись?')) {
+  const handleCancelApptGroup = async (ids: string[]) => {
+    if (confirm('Отменить запись (все услуги)?')) {
       try {
-        const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id);
+        const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).in('id', ids);
         if (error) throw error;
-        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a).filter(a => a.status !== 'cancelled')); 
+        setAppointments(prev => prev.map(a => ids.includes(a.id) ? { ...a, status: 'cancelled' } : a).filter(a => a.status !== 'cancelled')); 
       } catch (err: any) {
         alert('Ошибка при отмене: ' + err.message);
       }
@@ -375,73 +377,115 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
           
           {activeTab === 'appointments' && (
             <div className="space-y-4 animate-slide-up">
-              <div className="flex items-center justify-between mb-2">
+              <div className="bg-zinc-950/80 p-2 sm:p-4 rounded-3xl border border-white/5 shadow-inner mb-6">
+                <Calendar 
+                  tenant={{...tenant, availableDates: localAvailable} as Tenant} 
+                  selectedDate={filterDate} 
+                  onSelectDate={(d) => setFilterDate(prev => prev && prev.getTime() === d.getTime() ? null : d)} 
+                  isAdmin 
+                  appointments={appointments} 
+                />
+              </div>
+
+              <div className="flex items-center justify-between mb-2 px-2">
                 <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-400" /> Последние записи
+                  <Clock className="w-4 h-4 text-purple-400" /> 
+                  {filterDate ? format(filterDate, 'd MMMM', { locale: ru }) : 'Все записи'}
                 </h3>
+                {filterDate && (
+                  <button onClick={() => setFilterDate(null)} className="text-xs text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full hover:bg-purple-500/20 active:scale-95 transition-all">
+                    Показать все
+                  </button>
+                )}
               </div>
               {loadingAppts ? (
                 <p className="text-zinc-500 text-sm py-4 text-center w-full">Загрузка записей...</p>
-              ) : appointments.length === 0 ? (
-                <p className="text-zinc-500 text-sm py-4 text-center w-full">Нет новых записей</p>
               ) : (
-                appointments.map(appt => {
-                  const clientName = appt.clients ? `${appt.clients.first_name || ''} ${appt.clients.last_name || ''}`.trim() || 'Без имени' : 'Без имени';
-                  const handle = appt.clients?.username ? `@${appt.clients.username}` : '';
-                  const serviceName = appt.services?.name || 'Услуга удалена';
-                  const dateStr = format(new Date(appt.appointment_date), 'dd MMM', { locale: ru });
-                  const timeStr = appt.start_time.substring(0, 5); // "14:00:00" -> "14:00"
+                (() => {
+                  let filteredAppointments = appointments;
+                  if (filterDate) {
+                    const dStr = format(filterDate, 'yyyy-MM-dd');
+                    filteredAppointments = appointments.filter(a => a.appointment_date === dStr);
+                  }
 
-                  return (
-                    <div key={appt.id} className="bg-zinc-800/40 p-4 rounded-2xl border border-white/5 flex flex-col gap-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
-                            {clientName}
-                            {handle ? (
-                              <button onClick={(e) => {
-                                e.preventDefault();
-                                const tg = (window as any).Telegram?.WebApp;
-                                if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/${handle.replace('@','')}`);
-                                else window.open(`https://t.me/${handle.replace('@','')}`, '_blank');
-                              }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
-                                {handle}
-                              </button>
-                            ) : appt.clients?.telegram_id ? (
-                              <button onClick={(e) => {
-                                e.preventDefault();
-                                const tg = (window as any).Telegram?.WebApp;
-                                if (tg?.openTelegramLink) tg.openTelegramLink(`tg://user?id=${appt.clients.telegram_id}`);
-                                else window.location.href = `tg://user?id=${appt.clients.telegram_id}`;
-                              }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
-                                Написать
-                              </button>
-                            ) : null}
-                          </p>
-                          <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5">
-                            <div className={`w-1 h-1 rounded-full opacity-80 ${appt.status === 'confirmed' ? 'bg-green-500' : 'bg-purple-500'}`} />
-                            {serviceName} {appt.status === 'confirmed' && <span className="text-green-500 text-[11px] ml-1">(Подтверждено)</span>}
+                  if (filteredAppointments.length === 0) {
+                    return <p className="text-zinc-500 text-sm py-4 text-center w-full">Нет записей {filterDate ? 'на этот день' : ''}</p>;
+                  }
+
+                  const groupedMap = new Map<any, any[]>();
+                  filteredAppointments.forEach(appt => {
+                    const groupId = appt.client_comment?.startsWith('order_') ? appt.client_comment : appt.id;
+                    if (!groupedMap.has(groupId)) {
+                      groupedMap.set(groupId, []);
+                    }
+                    groupedMap.get(groupId)!.push(appt);
+                  });
+                  return Array.from(groupedMap.values()).map(group => {
+                    const mainAppt = group[0];
+                    const clientName = mainAppt.clients ? `${mainAppt.clients.first_name || ''} ${mainAppt.clients.last_name || ''}`.trim() || 'Без имени' : 'Без имени';
+                    const handle = mainAppt.clients?.username ? `@${mainAppt.clients.username}` : '';
+                    
+                    const groupServices = group.map(a => a.services?.name || 'Услуга удалена');
+                    const allServiceNames = groupServices.join(', ');
+                    
+                    const dateStr = format(new Date(mainAppt.appointment_date), 'dd MMM', { locale: ru });
+                    const timeStr = mainAppt.start_time.substring(0, 5); 
+                    const idsToConfirm = group.map(a => a.id);
+                    const slotsToBook = group.map(a => a.start_time.substring(0, 5));
+                    
+                    const isAllConfirmed = group.every(a => a.status === 'confirmed');
+
+                    return (
+                      <div key={mainAppt.id} className="bg-zinc-800/40 p-4 rounded-2xl border border-white/5 flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-zinc-100 text-[15px] flex items-center gap-2">
+                              {clientName}
+                              {handle ? (
+                                <button onClick={(e) => {
+                                  e.preventDefault();
+                                  const tg = (window as any).Telegram?.WebApp;
+                                  if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/${handle.replace('@','')}`);
+                                  else window.open(`https://t.me/${handle.replace('@','')}`, '_blank');
+                                }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
+                                  {handle}
+                                </button>
+                              ) : mainAppt.clients?.telegram_id ? (
+                                <button onClick={(e) => {
+                                  e.preventDefault();
+                                  const tg = (window as any).Telegram?.WebApp;
+                                  if (tg?.openTelegramLink) tg.openTelegramLink(`tg://user?id=${mainAppt.clients.telegram_id}`);
+                                  else window.location.href = `tg://user?id=${mainAppt.clients.telegram_id}`;
+                                }} className="text-purple-400 text-[12px] font-normal hover:underline bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 active:scale-95 transition-transform flex items-center cursor-pointer">
+                                  Написать
+                                </button>
+                              ) : null}
+                            </p>
+                            <div className="text-zinc-500 text-[13px] mt-1.5 flex items-center gap-1.5 flex-wrap">
+                              <div className={`w-1 h-1 rounded-full opacity-80 ${isAllConfirmed ? 'bg-green-500' : 'bg-purple-500'}`} />
+                              {allServiceNames} {isAllConfirmed && <span className="text-green-500 text-[11px] ml-1">(Подтверждено)</span>}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <span className="inline-block px-2.5 py-1 rounded-lg bg-zinc-950/50 text-zinc-300 text-[11px] font-medium border border-white/5 shadow-sm">
+                              {dateStr}, {timeStr}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="inline-block px-2.5 py-1 rounded-lg bg-zinc-950/50 text-zinc-300 text-[11px] font-medium border border-white/5 shadow-sm">
-                            {dateStr}, {timeStr}
-                          </span>
-                        </div>
+                        {!isAllConfirmed && (
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => handleConfirmApptGroup(idsToConfirm, mainAppt.appointment_date, slotsToBook)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
+                              Подтвердить
+                            </button>
+                            <button onClick={() => handleCancelApptGroup(idsToConfirm)} className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-500 text-[13px] font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all border border-red-500/20 shadow-sm active:scale-95">
+                              Отменить
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {appt.status === 'pending' && (
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => handleConfirmAppt(appt.id, appt.appointment_date, appt.start_time)} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 text-[13px] font-bold hover:bg-green-500/20 active:bg-green-500/30 transition-all border border-green-500/20 shadow-sm active:scale-95">
-                            Подтвердить
-                          </button>
-                          <button onClick={() => handleCancelAppt(appt.id)} className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-500 text-[13px] font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all border border-red-500/20 shadow-sm active:scale-95">
-                            Отменить
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                    );
+                  });
+                })()
               )}
             </div>
           )}
@@ -477,7 +521,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
               </div>
 
               <div className="bg-zinc-950/80 p-2 sm:p-4 rounded-3xl border border-white/5 shadow-inner">
-                <Calendar tenant={{...tenant, availableDates: localAvailable} as Tenant} selectedDate={tempDate} onSelectDate={handleCalendarClick} isAdmin />
+                <Calendar tenant={{...tenant, availableDates: localAvailable} as Tenant} selectedDate={tempDate} onSelectDate={handleCalendarClick} isAdmin appointments={appointments} />
               </div>
 
               {tempDate && (
@@ -632,7 +676,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ tenant, onUpdateTenant }
                 {[
                   { id: 'midnight', name: 'Midnight (Тёмная листва)', accent: '#9333ea', bg: '#040405' },
                   { id: 'snow', name: 'Snow (Светлая чистая)', accent: '#9333ea', bg: '#ffffff' },
-                  { id: 'concrete', name: 'Concrete (Серая матовая)', accent: '#27272a', bg: '#737373' },
                   { id: 'blossom', name: 'Blossom (Кремовая)', accent: '#f4c2c2', bg: '#fdfbf7' },
                   { id: 'cyberpunk', name: 'Cyberpunk (Неоновая)', accent: '#ec4899', bg: '#000b18' }
                 ].map(theme => {

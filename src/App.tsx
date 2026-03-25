@@ -21,7 +21,7 @@ function App() {
 
   useEffect(() => {
     if (tenant) {
-      const themes = ['midnight', 'snow', 'concrete', 'blossom', 'cyberpunk'];
+      const themes = ['midnight', 'snow', 'blossom', 'cyberpunk'];
       let hash = 0;
       for (let i = 0; i < tenant.id.length; i++) {
         hash = tenant.id.charCodeAt(i) + ((hash << 5) - hash);
@@ -76,8 +76,6 @@ function App() {
 
     setIsBooking(true);
     try {
-      // 1. Создаем или находим мокового клиента (т.к. у нас пока нет реальной авторизации)
-      // В реальном приложении данные берутся из Telegram WebApp initData
       const webApp = (window as any).Telegram?.WebApp;
       const tgUser = webApp?.initDataUnsafe?.user;
       
@@ -86,8 +84,6 @@ function App() {
       const lastName = tgUser?.last_name || '';
       const username = tgUser?.username || '';
 
-
-      // Пытаемся найти или создать клиента
       let { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id')
@@ -104,31 +100,34 @@ function App() {
         if (newClientError) throw newClientError;
         clientData = newClient;
       } else {
-        // Обновляем данные клиента (если раньше были тестовые или без юзернейма)
         await supabase
           .from('clients')
           .update({ first_name: firstName, last_name: lastName, username: username })
           .eq('id', clientData.id);
       }
 
-      // 2. Рассчитываем время окончания (очень простой расчет)
-      const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+      // Генерируем уникальный ID заказа для связи услуг
+      const orderId = Math.random().toString(36).substring(2, 9);
+      
+      let currentStartTime = new Date(selectedDate);
       const [hours, minutes] = selectedSlot.split(':').map(Number);
-      const startDateTime = new Date(selectedDate);
-      startDateTime.setHours(hours, minutes, 0, 0);
-      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000);
-      const endSlot = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`;
+      currentStartTime.setHours(hours, minutes, 0, 0);
 
-      // 3. Создаем записи (по одной на каждую услугу, либо можно объединить)
-      // В текущей схеме БД 1 запись = 1 услуга. Создадим записи для всех выбранных услуг.
-      const appointmentsToInsert = selectedServiceIds.map(serviceId => ({
-        client_id: clientData.id,
-        service_id: serviceId,
-        appointment_date: format(selectedDate, 'yyyy-MM-dd'),
-        start_time: `${selectedSlot}:00`,
-        end_time: `${endSlot}:00`,
-        status: 'pending'
-      }));
+      const appointmentsToInsert = selectedServices.map(service => {
+        const startSlot = `${currentStartTime.getHours().toString().padStart(2, '0')}:${currentStartTime.getMinutes().toString().padStart(2, '0')}`;
+        currentStartTime = new Date(currentStartTime.getTime() + service.durationMinutes * 60000);
+        const endSlot = `${currentStartTime.getHours().toString().padStart(2, '0')}:${currentStartTime.getMinutes().toString().padStart(2, '0')}`;
+        
+        return {
+          client_id: clientData.id,
+          service_id: service.id,
+          appointment_date: format(selectedDate, 'yyyy-MM-dd'),
+          start_time: `${startSlot}:00`,
+          end_time: `${endSlot}:00`,
+          status: 'pending',
+          client_comment: `order_${orderId}`
+        };
+      });
 
       const { error: apptError } = await supabase.from('appointments').insert(appointmentsToInsert);
       if (apptError) throw apptError;
@@ -152,16 +151,14 @@ function App() {
       }
       
       if (webApp && webApp.showAlert) {
-        webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`, () => {
-          webApp.close();
-        });
+        webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`);
       } else {
-        alert(`Запись успешно создана в базе данных!`);
-        // Сброс формы
-        setSelectedServiceIds([]);
-        setSelectedDate(null);
-        setSelectedSlot(null);
+        alert(`Запись успешно создана!`);
       }
+      // Сброс формы и оставляем MiniApp открытым
+      setSelectedServiceIds([]);
+      setSelectedDate(null);
+      setSelectedSlot(null);
     } catch (err: any) {
       console.error('Ошибка записи:', err);
       alert('Произошла ошибка при записи: ' + err.message);
@@ -190,7 +187,6 @@ function App() {
         {[
           { id: 'midnight', bg: '#040405', border: '#9333ea' },
           { id: 'snow', bg: '#ffffff', border: '#9333ea' },
-          { id: 'concrete', bg: '#737373', border: '#27272a' },
           { id: 'blossom', bg: '#fdf5f5', border: '#eda8b5' },
           { id: 'cyberpunk', bg: '#000b18', border: '#ec4899' }
         ].map(theme => (
@@ -235,6 +231,7 @@ function App() {
                   selectedDate={selectedDate}
                   selectedSlot={selectedSlot}
                   onSelectSlot={setSelectedSlot}
+                  selectedTotalDuration={selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0)}
                 />
               </div>
             )}

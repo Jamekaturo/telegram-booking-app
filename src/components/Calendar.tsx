@@ -16,9 +16,10 @@ interface CalendarProps {
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
   isAdmin?: boolean;
+  appointments?: any[];
 }
 
-export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSelectDate, isAdmin = false }) => {
+export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSelectDate, isAdmin = false, appointments = [] }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -137,9 +138,13 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                   {format(day, 'd')}
                 </span>
                 
-                {/* Available indicator dot */}
-                {available && !isSelected && isExpanded && (
+                {/* Available indicator dot (only for booking view) */}
+                {available && !isSelected && isExpanded && !isAdmin && (
                   <div className="w-1 h-1 rounded-full bg-[var(--accent-main)] mt-1" />
+                )}
+                {/* Appointment indicator for Admin */}
+                {isAdmin && appointments?.some(a => a.appointment_date === format(day, 'yyyy-MM-dd')) && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-0.5 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
                 )}
               </button>
             </div>
