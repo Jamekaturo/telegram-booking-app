@@ -14,7 +14,7 @@ export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServic
   return (
     <div className="p-4 space-y-3">
       <h2 className="text-[19px] font-bold text-[var(--text-main)] flex items-center gap-2 px-1 mb-5">
-        Услуги мастера
+        Послуги майстра
       </h2>
       <div className="flex flex-col gap-3">
       {tenant.services.map((service) => {
@@ -46,12 +46,12 @@ export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServic
                 className="font-bold whitespace-nowrap text-[15px] sm:text-[17px]"
                 style={{ color: isSelected ? 'var(--accent-main)' : 'var(--text-main)' }}
               >
-                {service.price} ₴
+                {service.price}
               </span>
             </div>
             <div className="flex items-center text-[13px] font-medium gap-1.5 relative z-10" style={{ color: isSelected ? 'var(--text-main)' : 'var(--text-secondary)' }}>
               <Clock className="w-4 h-4 opacity-70" />
-              <span>{service.durationMinutes} мин</span>
+              <span>{service.durationMinutes} хв</span>
             </div>
           </button>
         );

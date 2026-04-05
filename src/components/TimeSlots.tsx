@@ -17,7 +17,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
   if (!selectedDate) {
     return (
       <div className="p-4 text-center text-[var(--text-secondary)] text-sm italic mt-2">
-        Выберите дату, чтобы увидеть доступное время
+        Оберіть дату, щоб побачити доступний час
       </div>
     );
   }
@@ -39,7 +39,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ tenant, selectedDate, sele
         <div className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] flex items-center justify-center border border-[var(--border-main)]">
           <Clock className="w-4 h-4 text-[var(--text-main)]" />
         </div>
-        <h3 className="text-[17px] font-bold text-[var(--text-main)] tracking-wide">Доступное время</h3>
+        <h3 className="text-[17px] font-bold text-[var(--text-main)] tracking-wide">Доступний час</h3>
       </div>
       <div className="grid grid-cols-4 gap-2.5">
         {slotsToRender.map((slot) => {

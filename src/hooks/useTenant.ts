@@ -70,7 +70,7 @@ export const useTenant = () => {
         setTenant({
           id: 'master_1',
           name: 'Beauty Studio "Glow"',
-          description: 'Маникюр, педикюр и уход за ногтями 💅',
+          description: 'Манікюр, педикюр та догляд за нігтями 💅',
           colors: {
             primary: '#c084fc',
             secondary: '#3b0764'
@@ -83,7 +83,7 @@ export const useTenant = () => {
         
       } catch (err: any) {
         console.error('Error fetching tenant data:', err);
-        setError('Не удалось загрузить данные мастера. ' + (err.message || ''));
+        setError('Не вдалося завантажити дані майстра. ' + (err.message || ''));
       } finally {
         setLoading(false);
       }

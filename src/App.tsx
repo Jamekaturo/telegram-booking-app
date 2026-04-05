@@ -39,7 +39,7 @@ function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-main)]">
         <div className="w-12 h-12 border-4 border-[var(--border-main)] border-t-[var(--accent-main)] rounded-full animate-spin mb-4" />
-        <p className="text-[var(--text-secondary)] font-medium">Загрузка данных мастера...</p>
+        <p className="text-[var(--text-secondary)] font-medium">Завантаження даних майстра...</p>
       </div>
     );
   }
@@ -48,8 +48,8 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main)]">
         <div className="text-center p-6 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--border-main)] max-w-sm mx-4">
-          <h2 className="text-xl font-bold text-red-500 mb-2">Ошибка</h2>
-          <p className="text-[var(--text-secondary)]">{error || "Нет данных"}</p>
+          <h2 className="text-xl font-bold text-red-500 mb-2">Помилка</h2>
+          <p className="text-[var(--text-secondary)]">{error || "Немає даних"}</p>
         </div>
       </div>
     );
@@ -151,17 +151,17 @@ function App() {
       }
       
       if (webApp && webApp.showAlert) {
-        webApp.showAlert(`Успешно! Вы записаны на ${format(selectedDate, 'dd.MM')} в ${selectedSlot}. Ждем вас!`);
+        webApp.showAlert(`Успішно! Ви записані на ${format(selectedDate, 'dd.MM')} о ${selectedSlot}. Чекаємо на вас!`);
       } else {
-        alert(`Запись успешно создана!`);
+        alert(`Запис успішно створено!`);
       }
       // Сброс формы и оставляем MiniApp открытым
       setSelectedServiceIds([]);
       setSelectedDate(null);
       setSelectedSlot(null);
     } catch (err: any) {
-      console.error('Ошибка записи:', err);
-      alert('Произошла ошибка при записи: ' + err.message);
+      console.error('Помилка запису:', err);
+      alert('Сталася помилка при записі: ' + err.message);
     } finally {
       setIsBooking(false);
     }

@@ -59,18 +59,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
        return res.status(500).json({ error: 'No admin Chat ID configured' });
     }
 
-    const handleText = username ? ` (@${username})` : '';
-    const nameMention = telegramId ? `[${clientName}](tg://user?id=${telegramId})` : clientName;
-    const priceText = price ? `\n💰 *Стоимость:* ${price} ₽` : '';
+    const escapeHtml = (text: string) => {
+       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    };
 
-    const message = `🔔 *Новая запись!*\n\n` +
-      `👤 *Клиент:* ${nameMention}${handleText}\n` +
-      `💅 *Услуги:* ${serviceName}\n` +
-      `📅 *Дата:* ${date}\n` +
-      `⏰ *Время:* ${time}${priceText}\n\n` +
+    const handleText = username ? ` (@${username})` : '';
+    const nameMention = telegramId ? `<a href="tg://user?id=${telegramId}">${escapeHtml(clientName)}</a>` : escapeHtml(clientName);
+    const priceText = price ? `\n💰 <b>Стоимость:</b> ${price} ₽` : '';
+
+    const safeService = escapeHtml(serviceName);
+
+    const message = `🔔 <b>Новая запись!</b>\n\n` +
+      `👤 <b>Клиент:</b> ${nameMention}${handleText}\n` +
+      `💅 <b>Услуги:</b> ${safeService}\n` +
+      `📅 <b>Дата:</b> ${date}\n` +
+      `⏰ <b>Время:</b> ${time}${priceText}\n\n` +
       `Зайдите в Админ-панель (кнопка ⚙️) внутри вашего бота, чтобы подтвердить!`;
 
-    await bot.telegram.sendMessage(targetChatId, message, { parse_mode: 'Markdown' });
+    try {
+       await bot.telegram.sendMessage(targetChatId, message, { parse_mode: 'HTML' });
+    } catch (err: any) {
+       console.error('Failed to notify admin', err);
+       // fallback without parse_mode
+       await bot.telegram.sendMessage(targetChatId, message.replace(/<b>|<\/b>|<a>|<\/a>/g, ''));
+    }
 
     // Send confirmation to client
     if (telegramId) {
@@ -78,8 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const clientMsg = `✅ <b>Ваша запись успешно создана!</b>\n\n` +
           `💅 <b>Услуги:</b> ${safeService}\n` +
           `📅 <b>Дата:</b> ${date}\n` +
-          `⏰ <b>Время:</b> ${time}${priceText ? escapeHtml(priceText) : ''}\n\n` +
-          `Мы свяжемся с вами в случае необходимости, либо просто ждем вас в назначенное время!`;
+          `⏰ <b>Время:</b> ${time}${priceText}\n\n` +
+          `Мы свяжемся с вами в случае необходимости, либо просто ждём вас в назначенное время!`;
         await bot.telegram.sendMessage(telegramId, clientMsg, { parse_mode: 'HTML' });
       } catch (err) {
         console.error('Failed to notify client via DM', err);

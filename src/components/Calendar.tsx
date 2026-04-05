@@ -6,7 +6,7 @@ import {
   addMonths, subMonths, addWeeks, subWeeks,
   isBefore, startOfDay
 } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { uk } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -57,7 +57,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
 
   // Weekday headers for month view
   const weekDayHeaders = Array.from({ length: 7 }).map((_, i) => 
-    format(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i), 'EEEEEE', { locale: ru })
+    format(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i), 'EEEEEE', { locale: uk })
   );
 
   return (
@@ -68,7 +68,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
             <CalendarIcon className="w-4 h-4 text-[var(--text-main)]" />
           </div>
           <h2 className="text-[17px] font-bold text-[var(--text-main)] capitalize tracking-wide">
-            {format(currentDate, 'LLLL yyyy', { locale: ru })}
+            {format(currentDate, 'LLLL yyyy', { locale: uk })}
           </h2>
         </div>
         <div className="flex gap-1 md:gap-2 -mr-1">
@@ -126,7 +126,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
                       "text-[10px] sm:text-[11px] font-bold mb-1.5 uppercase tracking-widest",
                       isSelected ? "text-[var(--accent-text)] opacity-90" : "text-[var(--text-muted)]"
                     )}>
-                    {format(day, 'EEEEEE', { locale: ru })}
+                    {format(day, 'EEEEEE', { locale: uk })}
                   </span>
                 )}
                 <span className={clsx(
@@ -159,12 +159,12 @@ export const Calendar: React.FC<CalendarProps> = ({ tenant, selectedDate, onSele
         >
           {isExpanded ? (
             <>
-              <span>Уменьшить</span>
+              <span>Зменшити</span>
               <ChevronUp className="w-4 h-4" />
             </>
           ) : (
             <>
-              <span>Раскрыть месяц</span>
+              <span>Розгорнути місяць</span>
               <ChevronDown className="w-4 h-4" />
             </>
           )}

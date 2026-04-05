@@ -31,7 +31,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({ tenant, disabled, 
           )}
           
           <span className="relative z-10 flex items-center gap-3">
-            {disabled ? 'Ожидание выбора...' : `Записаться на ${totalPrice} ₴`}
+            {disabled ? 'Очікування вибору...' : `Записатися на ${totalPrice}`}
             {!disabled && <CheckCircle className="w-5 h-5 text-[var(--accent-text)] opacity-90" />}
           </span>
         </button>
