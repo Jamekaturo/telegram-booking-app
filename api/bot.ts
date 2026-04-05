@@ -20,13 +20,24 @@ bot.start(async (ctx) => {
     
     console.log('User sent /start. Replying with URL:', finalUrl);
 
-    await ctx.reply('Добро пожаловать в студию! ✨\n\nНажмите кнопку ниже, чтобы выбрать услугу и время:', {
+    await ctx.reply('Ласкаво просимо до студії! ✨\n\nНатисніть кнопку нижче, щоб обрати послугу та час:', {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Запишитесь онлайн 📅', web_app: { url: finalUrl } }]
+          [{ text: 'Запишіться онлайн 📅', web_app: { url: finalUrl } }]
         ]
       }
     });
+
+    // Оновлюємо текст кнопки меню
+    try {
+      await ctx.setChatMenuButton({
+        type: 'web_app',
+        text: 'Запис',
+        web_app: { url: APP_URL }
+      });
+    } catch (e) {
+      console.error('Failed to set chat menu button:', e);
+    }
   } catch (error) {
     console.error('Error sending start message:', error);
   }

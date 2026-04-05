@@ -65,16 +65,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const handleText = username ? ` (@${username})` : '';
     const nameMention = telegramId ? `<a href="tg://user?id=${telegramId}">${escapeHtml(clientName)}</a>` : escapeHtml(clientName);
-    const priceText = price ? `\n💰 <b>Стоимость:</b> ${price} ₽` : '';
+    const priceText = price ? `\n💰 <b>Вартість:</b> ${price}` : '';
 
     const safeService = escapeHtml(serviceName);
 
-    const message = `🔔 <b>Новая запись!</b>\n\n` +
-      `👤 <b>Клиент:</b> ${nameMention}${handleText}\n` +
-      `💅 <b>Услуги:</b> ${safeService}\n` +
+    const message = `🔔 <b>Новий запис!</b>\n\n` +
+      `👤 <b>Клієнт:</b> ${nameMention}${handleText}\n` +
+      `💅 <b>Послуги:</b> ${safeService}\n` +
       `📅 <b>Дата:</b> ${date}\n` +
-      `⏰ <b>Время:</b> ${time}${priceText}\n\n` +
-      `Зайдите в Админ-панель (кнопка ⚙️) внутри вашего бота, чтобы подтвердить!`;
+      `⏰ <b>Час:</b> ${time}${priceText}\n\n` +
+      `Зайдіть в Адмін-панель (кнопка ⚙️) всередині вашого бота, щоб підтвердити!`;
 
     try {
        await bot.telegram.sendMessage(targetChatId, message, { parse_mode: 'HTML' });
@@ -87,11 +87,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send confirmation to client
     if (telegramId) {
       try {
-        const clientMsg = `✅ <b>Ваша запись успешно создана!</b>\n\n` +
-          `💅 <b>Услуги:</b> ${safeService}\n` +
+        const clientMsg = `✅ <b>Ваш запис успішно створено!</b>\n\n` +
+          `💅 <b>Послуги:</b> ${safeService}\n` +
           `📅 <b>Дата:</b> ${date}\n` +
-          `⏰ <b>Время:</b> ${time}${priceText}\n\n` +
-          `Мы свяжемся с вами в случае необходимости, либо просто ждём вас в назначенное время!`;
+          `⏰ <b>Час:</b> ${time}${priceText}\n\n` +
+          `Ми зв'яжемося з вами у разі потреби, або просто чекаємо на вас у призначений час!`;
         await bot.telegram.sendMessage(telegramId, clientMsg, { parse_mode: 'HTML' });
       } catch (err) {
         console.error('Failed to notify client via DM', err);
