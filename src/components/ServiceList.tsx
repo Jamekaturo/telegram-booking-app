@@ -13,9 +13,11 @@ interface ServiceListProps {
 export const ServiceList: React.FC<ServiceListProps> = ({ tenant, selectedServiceIds, onToggleService }) => {
   return (
     <div className="p-4 space-y-3">
-      <h2 className="text-[19px] font-bold text-[var(--text-main)] flex items-center gap-2 px-1 mb-5">
-        Послуги майстра
-      </h2>
+      <div className="inline-flex items-center px-4 py-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] mb-3 ml-1 backdrop-blur-sm shadow-sm ring-1 ring-white/5">
+        <h2 className="text-[17px] font-bold text-[var(--text-main)] flex items-center gap-2">
+          Послуги майстра
+        </h2>
+      </div>
       <div className="flex flex-col gap-3">
       {tenant.services.map((service) => {
         const isSelected = selectedServiceIds.includes(service.id);
